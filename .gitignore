@@ -1,2 +1,5 @@
-.env
+.credentials.env
 venv/
+__pycache__/
+data/
+logs/
