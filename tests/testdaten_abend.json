@@ -1,34 +1,22 @@
 {
   "etappe": {
-    "name": "TEST-ETAPPE",
+    "name": "Testetappe Abend",
     "punkte": [
-      [
-        42.1,
-        9.2
-      ],
-      [
-        42.2,
-        9.3
-      ]
+      {
+        "lat": 42.5,
+        "lon": 8.9
+      },
+      {
+        "lat": 42.6,
+        "lon": 8.95
+      }
     ]
   },
-  "daten": {
-    "nacht": {
-      "gefuehlt": 18.3
-    },
-    "regen": {
-      "wert": 70,
-      "menge": 10.2
-    },
-    "hitze": {
-      "wert": 35.4
-    },
-    "wind": {
-      "wert": 42
-    },
-    "gewitter": {
-      "wert": 60,
-      "ab": "13:00"
-    }
+  "wetter": {
+    "nachttemperatur": 17.3,
+    "hitze": 33.2,
+    "regen": 60,
+    "gewitter": 45,
+    "wind": 41
   }
 }

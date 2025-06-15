@@ -1,25 +1,35 @@
-
 import subprocess
 
-def run_test(input_file, modus, inreach=False):
-    cmd = ["python", "main.py", "--input", input_file, "--dry-run", "--modus", modus]
-    if inreach:
-        cmd.append("--inreach")
-    print(f"Running: {' '.join(cmd)}")
-    subprocess.run(cmd)
+tests = [
+    {
+        "name": "Abendmodus",
+        "args": ["--input", "tests/testdaten_abend.json", "--dry-run", "--modus", "abend"]
+    },
+    {
+        "name": "Morgenmodus",
+        "args": ["--input", "tests/testdaten_morgen.json", "--dry-run", "--modus", "morgen"]
+    },
+    {
+        "name": "Tageswarnung",
+        "args": ["--input", "tests/testdaten_tag_warnung.json", "--dry-run", "--modus", "tag"]
+    },
+    {
+        "name": "Fehlerhafte Daten",
+        "args": ["--input", "tests/testdaten_fehlerhaft.json", "--dry-run", "--modus", "abend"]
+    },
+    {
+        "name": "InReach Kurzmodus",
+        "args": ["--input", "tests/testdaten_abend.json", "--dry-run", "--modus", "abend", "--inreach"]
+    }
+]
 
-if __name__ == "__main__":
-    print("\n=== Test: Abendmodus ===")
-    run_test("tests/testdaten_abend.json", "abend")
-
-    print("\n=== Test: Morgenmodus ===")
-    run_test("tests/testdaten_morgen.json", "morgen")
-
-    print("\n=== Test: Tageswarnung ===")
-    run_test("tests/testdaten_tag_warnung.json", "tag")
-
-    print("\n=== Test: Fehlerhafte Daten ===")
-    run_test("tests/testdaten_fehlerhaft.json", "abend")
-
-    print("\n=== Test: InReach Kurzmodus ===")
-    run_test("tests/testdaten_abend.json", "abend", inreach=True)
+for test in tests:
+    print(f"\n=== Test: {test['name']} ===")
+    try:
+        cmd = ["python", "main.py"] + test["args"]
+        print("Running:", " ".join(cmd))
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        print(result.stdout.strip())
+    except subprocess.CalledProcessError as e:
+        print("Fehlgeschlagen:")
+        print(e.stderr.strip())
