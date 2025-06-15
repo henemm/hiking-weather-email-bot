@@ -1,80 +1,59 @@
-import argparse
-import datetime
-import json
-import logging
-from pathlib import Path
-import yaml
-
 from wetter.fetch import hole_wetterdaten
 from wetter.analyse import generiere_wetterbericht
 from wetter.notify import sende_email
-from wetter.delta import delta_warnung
 from etappen import ETAPPEN
+import datetime
+import sys
+import os
 
-# ------------------------ Logging Setup ------------------------
-logfile = Path("logs/wetter.log")
-logfile.parent.mkdir(exist_ok=True)
+modus = "abend"
+dry_run = False
 
-logging.basicConfig(
-    filename=logfile,
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s"
-)
+for arg in sys.argv[1:]:
+    if arg.startswith("--modus="):
+        modus = arg.split("=", 1)[1]
+    elif arg == "--dry-run":
+        dry_run = True
 
-# ------------------------ Argumente parsen ------------------------
-parser = argparse.ArgumentParser(description="Wetterbenachrichtigung GR20")
-parser.add_argument("--modus", choices=["abend", "morgen", "test"], default="abend")
-parser.add_argument("--dry-run", action="store_true")
-args = parser.parse_args()
-
-# ------------------------ Setup ------------------------
-modus = args.modus
 heute = datetime.date.today()
-etappe = ETAPPEN[(heute - datetime.date(2025, 7, 1)).days % len(ETAPPEN)]
-data_dir = Path("data")
-data_dir.mkdir(exist_ok=True)
-dateiname = data_dir / f"{heute}_{modus}.json"
+tag_index = (heute - datetime.date(2025, 7, 1)).days
 
-# ------------------------ Config laden ------------------------
-with open("config.yaml") as f:
-    config = yaml.safe_load(f)
+if tag_index < 0 or tag_index >= len(ETAPPEN):
+    print("Kein gültiger Etappentag")
+    sys.exit(0)
 
-# ------------------------ Wetterdaten abrufen ------------------------
-berichte = hole_wetterdaten(etappe["punkte"])
+etappe = ETAPPEN[tag_index]
+bericht = ""
 
-# ------------------------ Modus: ABEND ------------------------
 if modus == "abend":
-    with open(dateiname, "w") as f:
-        json.dump(berichte, f)
+    heute_daten = hole_wetterdaten(etappe["punkte"], tag="heute")
+    morgen_daten = hole_wetterdaten(ETAPPEN[tag_index + 1]["punkte"], tag="morgen") if tag_index + 1 < len(ETAPPEN) else None
 
-    text = generiere_wetterbericht(etappe["name"], berichte)
-    if args.dry_run:
-        print(text)
+    if morgen_daten:
+        bericht += generiere_wetterbericht(ETAPPEN[tag_index + 1]["name"], morgen_daten) + "\n\n"
+    bericht += generiere_wetterbericht(etappe["name"] + " (Nacht)", heute_daten)
+
+elif modus == "tag":
+    heute_daten_alt = hole_wetterdaten(etappe["punkte"], tag="morgen")  # was morgens bekannt war
+    aktuell_daten = hole_wetterdaten(etappe["punkte"], tag="heute")
+
+    delta_gewitter = aktuell_daten["gewitter"] - heute_daten_alt["gewitter"]
+    delta_regen = aktuell_daten["regen"] - heute_daten_alt["regen"]
+
+    delta_prozent = max(
+        abs(delta_gewitter),
+        abs(delta_regen)
+    )
+
+    if delta_prozent >= config["schwellen"]["delta_prozent"]:
+        bericht = generiere_wetterbericht(etappe["name"], aktuell_daten)
     else:
-        sende_email(text)
-        logging.info("Abendbericht gesendet.")
-
-# ------------------------ Modus: MORGEN ------------------------
-elif modus == "morgen":
-    abend_datei = data_dir / f"{heute}_abend.json"
-    if not abend_datei.exists():
-        logging.warning("Keine Abendprognose vorhanden – kein Delta möglich.")
-    else:
-        with open(abend_datei) as f:
-            abenddaten = json.load(f)
-
-        warntext, kritisch = delta_warnung(abenddaten, berichte, config["schwellen"]["delta_prozent"], etappe["name"])
-
-        if kritisch:
-            if args.dry_run:
-                print(warntext)
-            else:
-                sende_email(warntext)
-                logging.info("Delta-Warnung gesendet.")
-        else:
-            logging.info("Keine signifikante Wetteränderung.")
-
-# ------------------------ Modus: TEST ------------------------
+        print("Keine signifikante Änderung. Keine Mail gesendet.")
+        sys.exit(0)
 else:
-    text = generiere_wetterbericht(etappe["name"], berichte)
-    print(text)
+    print("Unbekannter Modus. Verwende --modus=abend oder --modus=tag")
+    sys.exit(1)
+
+print(bericht)
+if not dry_run:
+    sende_email(bericht)

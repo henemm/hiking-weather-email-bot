@@ -44,6 +44,12 @@ def hole_wetterdaten(punkte, tag="heute"):
         r = requests.get(OPEN_METEO_URL, params=params)
         data = r.json()
 
+        if "daily" not in data or "hourly" not in data:
+            raise ValueError(f"Ungültige API-Antwort für Punkt {lat}, {lon}: {data}")
+
+        if ziel_datum not in data["daily"]["time"]:
+            raise ValueError(f"Datum {ziel_datum} nicht in daily-Zeitraum enthalten: {data['daily']['time']}")
+
         i = data["daily"]["time"].index(ziel_datum)
 
         forecast = {
