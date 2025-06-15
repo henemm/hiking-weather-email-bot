@@ -1,0 +1,13 @@
+{
+  "nacht": {
+    "gefuehlt": 18.3
+  },
+  "tag": {
+    "gefuehlt_max": 35.4,
+    "regen_prozent": 70,
+    "regen_ab": 10,
+    "gewitter_prozent": 50,
+    "gewitter_ab": 13,
+    "wind_max": 45
+  }
+}

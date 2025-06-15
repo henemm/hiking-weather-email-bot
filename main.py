@@ -1,59 +1,56 @@
+import sys
+import argparse
+import datetime
 from wetter.fetch import hole_wetterdaten
 from wetter.analyse import generiere_wetterbericht
+from wetter.kurztext import generiere_kurznachricht
 from wetter.notify import sende_email
+from config import config
 from etappen import ETAPPEN
-import datetime
-import sys
-import os
+import json
 
-modus = "abend"
-dry_run = False
+parser = argparse.ArgumentParser()
+parser.add_argument("--modus", choices=["abend", "tag"], default="abend")
+parser.add_argument("--dry-run", action="store_true")
+parser.add_argument("--input", help="Pfad zu Testdaten (JSON)")
+parser.add_argument("--inreach", action="store_true")
+args = parser.parse_args()
 
-for arg in sys.argv[1:]:
-    if arg.startswith("--modus="):
-        modus = arg.split("=", 1)[1]
-    elif arg == "--dry-run":
-        dry_run = True
-
+# Etappe bestimmen
 heute = datetime.date.today()
-tag_index = (heute - datetime.date(2025, 7, 1)).days
-
-if tag_index < 0 or tag_index >= len(ETAPPEN):
-    print("Kein gültiger Etappentag")
-    sys.exit(0)
-
-etappe = ETAPPEN[tag_index]
-bericht = ""
-
-if modus == "abend":
-    heute_daten = hole_wetterdaten(etappe["punkte"], tag="heute")
-    morgen_daten = hole_wetterdaten(ETAPPEN[tag_index + 1]["punkte"], tag="morgen") if tag_index + 1 < len(ETAPPEN) else None
-
-    if morgen_daten:
-        bericht += generiere_wetterbericht(ETAPPEN[tag_index + 1]["name"], morgen_daten) + "\n\n"
-    bericht += generiere_wetterbericht(etappe["name"] + " (Nacht)", heute_daten)
-
-elif modus == "tag":
-    heute_daten_alt = hole_wetterdaten(etappe["punkte"], tag="morgen")  # was morgens bekannt war
-    aktuell_daten = hole_wetterdaten(etappe["punkte"], tag="heute")
-
-    delta_gewitter = aktuell_daten["gewitter"] - heute_daten_alt["gewitter"]
-    delta_regen = aktuell_daten["regen"] - heute_daten_alt["regen"]
-
-    delta_prozent = max(
-        abs(delta_gewitter),
-        abs(delta_regen)
-    )
-
-    if delta_prozent >= config["schwellen"]["delta_prozent"]:
-        bericht = generiere_wetterbericht(etappe["name"], aktuell_daten)
-    else:
-        print("Keine signifikante Änderung. Keine Mail gesendet.")
-        sys.exit(0)
+startdatum_raw = config.get("startdatum")
+if isinstance(startdatum_raw, str):
+    startdatum = datetime.date.fromisoformat(startdatum_raw)
 else:
-    print("Unbekannter Modus. Verwende --modus=abend oder --modus=tag")
+    startdatum = startdatum_raw
+
+etappen_index = (heute - startdatum).days
+if etappen_index < 0 or etappen_index >= len(ETAPPEN):
+    print("Kein gültiger Etappentag")
     sys.exit(1)
 
+etappe = ETAPPEN[etappen_index]
+
+# Wetterdaten laden
+if args.input:
+    with open(args.input) as f:
+        daten = json.load(f)
+else:
+    daten = hole_wetterdaten(etappe["punkte"])
+
+# Bericht erzeugen
+bericht = generiere_wetterbericht(
+    etappe["name"],
+    daten,
+    config.get("schwellen", {}),
+    args.modus
+)
+
+# ggf. kürzen für inReach
+if args.inreach:
+    bericht = generiere_kurznachricht(config, etappe["name"], daten)
+
 print(bericht)
-if not dry_run:
+
+if not args.dry_run:
     sende_email(bericht)

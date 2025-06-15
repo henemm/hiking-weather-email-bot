@@ -1,0 +1,34 @@
+{
+  "etappe": {
+    "name": "TEST-ETAPPE",
+    "punkte": [
+      [
+        42.1,
+        9.2
+      ],
+      [
+        42.2,
+        9.3
+      ]
+    ]
+  },
+  "daten": {
+    "nacht": {
+      "gefuehlt": 18.3
+    },
+    "regen": {
+      "wert": 70,
+      "menge": 10.2
+    },
+    "hitze": {
+      "wert": 35.4
+    },
+    "wind": {
+      "wert": 42
+    },
+    "gewitter": {
+      "wert": 60,
+      "ab": "13:00"
+    }
+  }
+}

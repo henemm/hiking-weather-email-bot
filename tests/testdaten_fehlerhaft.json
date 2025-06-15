@@ -1,0 +1,23 @@
+{
+  "etappe": {
+    "name": "FEHLERHAFTE ETAPPE",
+    "punkte": [
+      [
+        42.1,
+        9.2
+      ],
+      [
+        42.2,
+        9.3
+      ]
+    ]
+  },
+  "daten": {
+    "hitze": {
+      "wert": 29.0
+    },
+    "wind": {
+      "wert": 30
+    }
+  }
+}

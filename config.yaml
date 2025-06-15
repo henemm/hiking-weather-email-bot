@@ -1,3 +1,5 @@
+startdatum: "2025-06-15"
+
 smtp:
   host: smtp.gmail.com
   port: 587
