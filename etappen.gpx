@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd" version="1.1" creator="gpx.py -- https://github.com/tkrajina/gpxpy">
+  <wpt lat="42.510501" lon="8.851262">
+    <name>Etappe 1 Start</name>
+  </wpt>
+  <wpt lat="42.465338" lon="8.906984">
+    <name>Etappe 1 Ziel</name>
+  </wpt>
+  <wpt lat="42.465338" lon="8.906787">
+    <name>Etappe 2 Start</name>
+  </wpt>
+  <wpt lat="42.42624" lon="8.90029">
+    <name>Etappe 2 Ziel</name>
+  </wpt>
+  <wpt lat="42.426238" lon="8.900291">
+    <name>Etappe 3 Start</name>
+  </wpt>
+  <wpt lat="42.403526" lon="8.921923">
+    <name>Etappe 3 Ziel</name>
+  </wpt>
+  <wpt lat="42.403407" lon="8.922049">
+    <name>Etappe 4 Start</name>
+  </wpt>
+  <wpt lat="42.353003" lon="8.907812">
+    <name>Etappe 4 Ziel</name>
+  </wpt>
+  <wpt lat="42.353003" lon="8.907812">
+    <name>Etappe 5 Start</name>
+  </wpt>
+  <wpt lat="42.286453" lon="8.893872">
+    <name>Etappe 5 Ziel</name>
+  </wpt>
+  <wpt lat="42.286473" lon="8.893564">
+    <name>Etappe 6 Start</name>
+  </wpt>
+  <wpt lat="42.22026" lon="8.980731">
+    <name>Etappe 6 Ziel</name>
+  </wpt>
+  <trk>
+    <name>Alle Etappen</name>
+    <trkseg>
+      <trkpt lat="42.510501" lon="8.851262">
+      </trkpt>
+      <trkpt lat="42.510501" lon="8.851262">
+      </trkpt>
+      <trkpt lat="42.465338" lon="8.906984">
+      </trkpt>
+      <trkpt lat="42.465338" lon="8.906984">
+      </trkpt>
+      <trkpt lat="42.465338" lon="8.906787">
+      </trkpt>
+      <trkpt lat="42.465338" lon="8.906787">
+      </trkpt>
+      <trkpt lat="42.42624" lon="8.90029">
+      </trkpt>
+      <trkpt lat="42.42624" lon="8.90029">
+      </trkpt>
+      <trkpt lat="42.426238" lon="8.900291">
+      </trkpt>
+      <trkpt lat="42.426238" lon="8.900291">
+      </trkpt>
+      <trkpt lat="42.403526" lon="8.921923">
+      </trkpt>
+      <trkpt lat="42.403526" lon="8.921923">
+      </trkpt>
+      <trkpt lat="42.403407" lon="8.922049">
+      </trkpt>
+      <trkpt lat="42.403407" lon="8.922049">
+      </trkpt>
+      <trkpt lat="42.353003" lon="8.907812">
+      </trkpt>
+      <trkpt lat="42.353003" lon="8.907812">
+      </trkpt>
+      <trkpt lat="42.353003" lon="8.907812">
+      </trkpt>
+      <trkpt lat="42.353003" lon="8.907812">
+      </trkpt>
+      <trkpt lat="42.286453" lon="8.893872">
+      </trkpt>
+      <trkpt lat="42.286453" lon="8.893872">
+      </trkpt>
+      <trkpt lat="42.286473" lon="8.893564">
+      </trkpt>
+      <trkpt lat="42.286473" lon="8.893564">
+      </trkpt>
+      <trkpt lat="42.22026" lon="8.980731">
+      </trkpt>
+      <trkpt lat="42.22026" lon="8.980731">
+      </trkpt>
+    </trkseg>
+  </trk>
+</gpx>

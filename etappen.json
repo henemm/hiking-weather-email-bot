@@ -1,0 +1,108 @@
+[
+  {
+    "name": "2025-02-01_2038366857_Etappe 1_ Calenzana – Refuge d’Ortu.gpx",
+    "punkte": [
+      {
+        "lat": 42.510501,
+        "lon": 8.851262
+      },
+      {
+        "lat": 42.471362,
+        "lon": 8.897105
+      },
+      {
+        "lat": 42.465338,
+        "lon": 8.906984
+      }
+    ]
+  },
+  {
+    "name": "2025-02-01_1471226205_Etappe 2 (Bonifatu Variant) Von Refuge de l'Ortu di u Piobbu nach Refuge de Carozzu (1270m).gpx",
+    "punkte": [
+      {
+        "lat": 42.465338,
+        "lon": 8.906787
+      },
+      {
+        "lat": 42.463894,
+        "lon": 8.894516
+      },
+      {
+        "lat": 42.42624,
+        "lon": 8.90029
+      }
+    ]
+  },
+  {
+    "name": "2025-02-01_2038391063_Etappe 3_ Carozzu to Ascu Stagnu.gpx",
+    "punkte": [
+      {
+        "lat": 42.426238,
+        "lon": 8.900291
+      },
+      {
+        "lat": 42.410526,
+        "lon": 8.908343
+      },
+      {
+        "lat": 42.403526,
+        "lon": 8.921923
+      }
+    ]
+  },
+  {
+    "name": "2024-03-16_1471208417_Etappe 4_ Von Refuge Haut Asco nach Bergerie de Ballone.gpx",
+    "punkte": [
+      {
+        "lat": 42.403407,
+        "lon": 8.922049
+      },
+      {
+        "lat": 42.376742,
+        "lon": 8.937944
+      },
+      {
+        "lat": 42.353003,
+        "lon": 8.907812
+      }
+    ]
+  },
+  {
+    "name": "2025-02-01_1472179001_Etappe 5_ Von Bergerie de Ballone nach Hôtel Castel De Vergio.gpx",
+    "punkte": [
+      {
+        "lat": 42.353003,
+        "lon": 8.907812
+      },
+      {
+        "lat": 42.334736,
+        "lon": 8.873431
+      },
+      {
+        "lat": 42.286453,
+        "lon": 8.893872
+      }
+    ]
+  },
+  {
+    "name": "2025-02-01_1472183307_Etappe 6_ Von Castel De Vergio nach Refuge de Manganu.gpx",
+    "punkte": [
+      {
+        "lat": 42.286473,
+        "lon": 8.893564
+      },
+      {
+        "lat": 42.25421,
+        "lon": 8.925527
+      },
+      {
+        "lat": 42.229355,
+        "lon": 8.977679
+      },
+      {
+        "lat": 42.22026,
+        "lon": 8.980731
+      }
+    ]
+  }
+]

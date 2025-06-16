@@ -1,0 +1,10 @@
+{
+  "wetter": {
+    "hitze": 36.2,
+    "regen": 85,
+    "regen_ab": "2025-06-15T13:00",
+    "wind": 55,
+    "gewitter": 70,
+    "gewitter_ab": "2025-06-15T15:30"
+  }
+} 

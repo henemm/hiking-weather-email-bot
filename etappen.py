@@ -1,11 +1,19 @@
 import datetime
-from config import config
-from etappenliste import ETAPPEN
+import json
+
+
+def lade_etappen(pfad="etappen.json"):
+    with open(pfad, "r") as f:
+        return json.load(f)
+
 
 def lade_heutige_etappe(config):
+    etappen = lade_etappen()
+    startdatum = config["startdatum"]
     heute = datetime.date.today()
-    startdatum = datetime.date.fromisoformat(config["startdatum"])
-    delta = (heute - startdatum).days
-    if 0 <= delta < len(ETAPPEN):
-        return ETAPPEN[delta]
-    raise ValueError("Kein gültiger Etappentag")
+    differenz = (heute - startdatum).days
+
+    if differenz < 0 or differenz >= len(etappen):
+        raise ValueError("Kein gültiger Etappentag – liegt außerhalb des definierten Zeitraums.")
+
+    return etappen[differenz]

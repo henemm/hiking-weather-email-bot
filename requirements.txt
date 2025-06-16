@@ -1,3 +1,5 @@
 requests
 pyyaml
 python-dotenv
+gpxpy>=1.6.2
+geopy>=2.4.1

@@ -1,0 +1,14 @@
+{
+  "morgen": {
+    "hitze": 22.0,
+    "regen": 10,
+    "wind": 12,
+    "gewitter": 5
+  },
+  "tag": {
+    "hitze": 22.0,
+    "regen": 10,
+    "wind": 12,
+    "gewitter": 5
+  }
+} 

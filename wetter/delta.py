@@ -4,6 +4,7 @@ def berechne_delta(alt, neu):
     """
     return [b.get("regen", 0) - a.get("regen", 0) for a, b in zip(alt, neu)]
 
+
 def delta_warnung(alt, neu, schwelle, etappenname):
     """
     Gibt Warntext zurück, wenn Differenz über Schwelle liegt.

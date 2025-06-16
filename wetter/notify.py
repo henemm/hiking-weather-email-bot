@@ -1,8 +1,9 @@
 import os
 import smtplib
 from email.message import EmailMessage
-from dotenv import load_dotenv
+
 import yaml
+from dotenv import load_dotenv
 
 # .env mit sensiblen Zugangsdaten laden
 load_dotenv(".credentials.env")

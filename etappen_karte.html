@@ -1,0 +1,56 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Etappen-Visualisierung</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>#map { height: 98vh; width: 100vw; }</style>
+</head>
+<body>
+<div id="map"></div>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+var map = L.map('map').setView([42.5, 8.9], 10);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18,
+    attribution: '© OpenStreetMap contributors'
+}).addTo(map);
+
+var poly1 = L.polyline([[42.510501, 8.851262], [42.471362, 8.897105], [42.465338, 8.906984]], {color: '#4d15ad', weight: 5, opacity: 0.8}).addTo(map);
+poly1.bindPopup('Etappe 1');
+L.marker([42.510501, 8.851262]).addTo(map).bindPopup('Etappe 1 Start');
+L.marker([42.471362, 8.897105]).addTo(map).bindPopup('Etappe 1 Messpunkt 1');
+L.marker([42.465338, 8.906984]).addTo(map).bindPopup('Etappe 1 Ziel');
+var poly2 = L.polyline([[42.465338, 8.906787], [42.463894, 8.894516], [42.42624, 8.90029]], {color: '#732fce', weight: 5, opacity: 0.8}).addTo(map);
+poly2.bindPopup('Etappe 2');
+L.marker([42.465338, 8.906787]).addTo(map).bindPopup('Etappe 2 Start');
+L.marker([42.463894, 8.894516]).addTo(map).bindPopup('Etappe 2 Messpunkt 1');
+L.marker([42.42624, 8.90029]).addTo(map).bindPopup('Etappe 2 Ziel');
+var poly3 = L.polyline([[42.426238, 8.900291], [42.410526, 8.908343], [42.403526, 8.921923]], {color: '#7cf7fc', weight: 5, opacity: 0.8}).addTo(map);
+poly3.bindPopup('Etappe 3');
+L.marker([42.426238, 8.900291]).addTo(map).bindPopup('Etappe 3 Start');
+L.marker([42.410526, 8.908343]).addTo(map).bindPopup('Etappe 3 Messpunkt 1');
+L.marker([42.403526, 8.921923]).addTo(map).bindPopup('Etappe 3 Ziel');
+var poly4 = L.polyline([[42.403407, 8.922049], [42.376742, 8.937944], [42.353003, 8.907812]], {color: '#164a34', weight: 5, opacity: 0.8}).addTo(map);
+poly4.bindPopup('Etappe 4');
+L.marker([42.403407, 8.922049]).addTo(map).bindPopup('Etappe 4 Start');
+L.marker([42.376742, 8.937944]).addTo(map).bindPopup('Etappe 4 Messpunkt 1');
+L.marker([42.353003, 8.907812]).addTo(map).bindPopup('Etappe 4 Ziel');
+var poly5 = L.polyline([[42.353003, 8.907812], [42.334736, 8.873431], [42.286453, 8.893872]], {color: '#2382a1', weight: 5, opacity: 0.8}).addTo(map);
+poly5.bindPopup('Etappe 5');
+L.marker([42.353003, 8.907812]).addTo(map).bindPopup('Etappe 5 Start');
+L.marker([42.334736, 8.873431]).addTo(map).bindPopup('Etappe 5 Messpunkt 1');
+L.marker([42.286453, 8.893872]).addTo(map).bindPopup('Etappe 5 Ziel');
+var poly6 = L.polyline([[42.286473, 8.893564], [42.25421, 8.925527], [42.229355, 8.977679], [42.22026, 8.980731]], {color: '#56b68c', weight: 5, opacity: 0.8}).addTo(map);
+poly6.bindPopup('Etappe 6');
+L.marker([42.286473, 8.893564]).addTo(map).bindPopup('Etappe 6 Start');
+L.marker([42.25421, 8.925527]).addTo(map).bindPopup('Etappe 6 Messpunkt 1');
+L.marker([42.229355, 8.977679]).addTo(map).bindPopup('Etappe 6 Messpunkt 2');
+L.marker([42.22026, 8.980731]).addTo(map).bindPopup('Etappe 6 Ziel');
+map.fitBounds([[42.510501, 8.851262], [42.471362, 8.897105], [42.465338, 8.906984], [42.465338, 8.906787], [42.463894, 8.894516], [42.42624, 8.90029], [42.426238, 8.900291], [42.410526, 8.908343], [42.403526, 8.921923], [42.403407, 8.922049], [42.376742, 8.937944], [42.353003, 8.907812], [42.353003, 8.907812], [42.334736, 8.873431], [42.286453, 8.893872], [42.286473, 8.893564], [42.25421, 8.925527], [42.229355, 8.977679], [42.22026, 8.980731]]);
+
+</script>
+</body>
+</html>
