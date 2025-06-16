@@ -1,6 +1,122 @@
 # Hiking Weather Email Bot
 
-Automated system for daily weather warnings via email or as a shortened InReach message – ideal for multi-day treks such as the GR20.
+Ein Python-Bot, der Wetterwarnungen für Wanderungen per E-Mail versendet. Version 1.0
+
+## Features
+
+- **Wetterberichte** für verschiedene Modi:
+  - Abend: Tageszusammenfassung mit Warnungen
+  - Morgen: Vorhersage für den kommenden Tag
+  - Tag: Delta-Warnungen bei Wetteränderungen
+
+- **Delta-Warnungen** bei signifikanten Änderungen:
+  - Regenrisiko
+  - Gewitterwahrscheinlichkeit
+  - Windgeschwindigkeit
+  - Temperatur
+  - Zeitverschiebungen bei Gewitterwarnungen
+
+- **Konfigurierbare Schwellenwerte** für:
+  - Regen (in %)
+  - Gewitter (in %)
+  - Wind (in km/h)
+  - Hitze (in °C)
+  - Delta-Prozent für Änderungswarnungen
+
+## Installation
+
+1. Repository klonen:
+```bash
+git clone https://github.com/henemm/hiking-weather-email-bot.git
+cd hiking-weather-email-bot
+```
+
+2. Python-Abhängigkeiten installieren:
+```bash
+pip install -r requirements.txt
+```
+
+3. Konfiguration anpassen:
+   - `config.yaml` mit SMTP-Daten und Schwellenwerten
+   - `.env` mit API-Keys und Passwörtern
+
+## Konfiguration
+
+### config.yaml
+```yaml
+startdatum: "2025-06-15"
+smtp:
+  host: smtp.gmail.com
+  port: 587
+  user: your.email@gmail.com
+  to: recipient@example.com
+  subject: Wetterwarnung GR20
+schwellen:
+  regen: 50
+  gewitter: 30
+  delta_prozent: 20
+  hitze: 32
+  wind: 40
+```
+
+### .env
+```
+GMAIL_APP_PW=your_app_password
+WEATHER_API_KEY=your_api_key
+```
+
+## Verwendung
+
+### Kommandozeilenargumente
+
+```bash
+python main.py --modus [abend|morgen|tag] [--inreach] [--dry-run]
+```
+
+- `--modus`: Art der Wettermeldung
+  - `abend`: Tageszusammenfassung
+  - `morgen`: Vorhersage für morgen
+  - `tag`: Delta-Warnungen bei Änderungen
+- `--inreach`: Kürzere Nachricht für InReach-Geräte
+- `--dry-run`: Nur Ausgabe, kein E-Mail-Versand
+
+### Testdaten
+
+Für Tests können JSON-Dateien mit Wetterdaten verwendet werden:
+```bash
+python main.py --modus tag --input tests/testdaten_tag_delta.json
+```
+
+## Tests
+
+Alle Tests ausführen:
+```bash
+python -m unittest discover tests
+```
+
+Spezifische Tests:
+```bash
+python -m unittest tests/test_app_outputs.py
+python -m unittest tests/test_wetterdaten.py
+python -m unittest tests/test_config.py
+```
+
+## Version 1.0
+
+Die erste stabile Version enthält:
+- Vollständige Testabdeckung
+- Delta-Warnungen für Wetteränderungen
+- Zeitverschiebungs-Warnungen für Gewitter
+- Verbesserte Fehlerbehandlung
+- Stabile Konfiguration
+
+## Lizenz
+
+MIT License
+
+## Autor
+
+Henning Emmrich
 
 ---
 
