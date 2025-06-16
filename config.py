@@ -29,41 +29,17 @@ def sicherstelle_verzeichnis(pfad: str) -> None:
         raise ConfigError(f"Konnte Verzeichnis {pfad} nicht erstellen: {str(e)}")
 
 def validiere_schwellenwerte(schwellen: Dict[str, Any]) -> None:
-    """
-    Validiert die Schwellenwerte auf Plausibilität.
-    
-    Args:
-        schwellen: Dictionary mit Schwellenwerten
-        
-    Raises:
-        ConfigValidationError: Bei ungültigen Werten
-    """
-    if not isinstance(schwellen, dict):
-        raise ConfigValidationError("Schwellenwerte müssen ein Dictionary sein")
-
-    min_max_values = {
-        "regen": (0, 100),
-        "gewitter": (0, 100),
-        "wind": (0, 200),
-        "hitze": (-20, 50),
-        "delta_prozent": (0, 100),
-        "gewitter_ab_uhrzeit": (0, 23)
-    }
-    
-    # Prüfe ob alle erforderlichen Schwellenwerte vorhanden sind
-    fehlende_schwellen = set(min_max_values.keys()) - set(schwellen.keys())
+    """Validiert die Schwellenwerte."""
+    erforderliche_schwellen = [
+        "regen",
+        "gewitter",
+        "delta_prozent",
+        "hitze",
+        "wind"
+    ]
+    fehlende_schwellen = [s for s in erforderliche_schwellen if s not in schwellen]
     if fehlende_schwellen:
         raise ConfigValidationError(f"Fehlende Schwellenwerte: {', '.join(fehlende_schwellen)}")
-    
-    # Prüfe jeden Schwellenwert
-    for key, (min_val, max_val) in min_max_values.items():
-        value = schwellen.get(key)
-        if not isinstance(value, (int, float)):
-            raise ConfigValidationError(f"Schwellenwert für '{key}' muss eine Zahl sein")
-        if not min_val <= value <= max_val:
-            raise ConfigValidationError(
-                f"Schwellenwert für '{key}' muss zwischen {min_val} und {max_val} liegen"
-            )
 
 def validiere_smtp_config(smtp: Dict[str, Any]) -> None:
     """

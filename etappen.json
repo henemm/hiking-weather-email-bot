@@ -1,6 +1,6 @@
 [
   {
-    "name": "2025-02-01_2038366857_Etappe 1_ Calenzana – Refuge d’Ortu.gpx",
+    "name": "E1 Ortu",
     "punkte": [
       {
         "lat": 42.510501,
@@ -17,7 +17,7 @@
     ]
   },
   {
-    "name": "2025-02-01_1471226205_Etappe 2 (Bonifatu Variant) Von Refuge de l'Ortu di u Piobbu nach Refuge de Carozzu (1270m).gpx",
+    "name": "E2 Carozzu",
     "punkte": [
       {
         "lat": 42.465338,
@@ -34,7 +34,7 @@
     ]
   },
   {
-    "name": "2025-02-01_2038391063_Etappe 3_ Carozzu to Ascu Stagnu.gpx",
+    "name": "E3 Ascu",
     "punkte": [
       {
         "lat": 42.426238,
@@ -51,7 +51,7 @@
     ]
   },
   {
-    "name": "2024-03-16_1471208417_Etappe 4_ Von Refuge Haut Asco nach Bergerie de Ballone.gpx",
+    "name": "E4 Ballone",
     "punkte": [
       {
         "lat": 42.403407,
@@ -68,7 +68,7 @@
     ]
   },
   {
-    "name": "2025-02-01_1472179001_Etappe 5_ Von Bergerie de Ballone nach Hôtel Castel De Vergio.gpx",
+    "name": "E5 Castel De Vergio",
     "punkte": [
       {
         "lat": 42.353003,
@@ -85,7 +85,7 @@
     ]
   },
   {
-    "name": "2025-02-01_1472183307_Etappe 6_ Von Castel De Vergio nach Refuge de Manganu.gpx",
+    "name": "E6 Manganu",
     "punkte": [
       {
         "lat": 42.286473,

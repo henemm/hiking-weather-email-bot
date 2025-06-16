@@ -3,12 +3,14 @@
     "hitze": 22.0,
     "regen": 10,
     "wind": 12,
-    "gewitter": 5
+    "gewitter": 5,
+    "gewitter_ab": "15:00"
   },
   "tag": {
-    "hitze": 22.0,
-    "regen": 10,
-    "wind": 12,
-    "gewitter": 5
+    "hitze": 28.0,
+    "regen": 35,
+    "wind": 8,
+    "gewitter": 25,
+    "gewitter_ab": "16:30"
   }
 } 

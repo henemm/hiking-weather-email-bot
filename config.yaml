@@ -11,4 +11,3 @@ schwellen:
   delta_prozent: 20
   hitze: 32
   wind: 40
-  gewitter_ab_uhrzeit: 12

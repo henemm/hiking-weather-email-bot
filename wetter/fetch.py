@@ -165,6 +165,9 @@ def hole_wetterdaten(punkte: List[Dict[str, float]], modus: str = "tag") -> Dict
         try:
             daten = fetch_weather_data(punkt["lat"], punkt["lon"], heute, modus)
             alle_daten.append(daten)
+        except WeatherAPIError as e:
+            # API-Fehler direkt weiterleiten
+            raise
         except Exception as e:
             msg = (
                 f"Fehler beim Abrufen der Daten für "
@@ -186,21 +189,21 @@ def hole_wetterdaten(punkte: List[Dict[str, float]], modus: str = "tag") -> Dict
     # Schwellenwerte aus config
     regen_schwelle = config["schwellen"]["regen"]
     gewitter_schwelle = config["schwellen"]["gewitter"]
-    # Frühester Zeitpunkt, an dem Schwellenwert überschritten wird (über alle Punkte)
+    # Frühester Zeitpunkt, an dem überhaupt Regen/Gewitter möglich ist (über alle Punkte)
     regen_ab_candidates = []
     gewitter_ab_candidates = []
     for d in alle_daten:
         times = d["hourly"]["time"]
         regen_vals = d["hourly"]["precipitation_probability"]
         gewitter_vals = d["hourly"]["thunderstorm_probability"]
-        # Regen
+        # Regen: erste Stunde mit >0%
         for t, v in zip(times, regen_vals):
-            if v is not None and v >= regen_schwelle:
+            if v is not None and v > 0:
                 regen_ab_candidates.append(t)
                 break
-        # Gewitter
+        # Gewitter: erste Stunde mit >0%
         for t, v in zip(times, gewitter_vals):
-            if v is not None and v >= gewitter_schwelle:
+            if v is not None and v > 0:
                 gewitter_ab_candidates.append(t)
                 break
     regen_ab = min(regen_ab_candidates) if regen_ab_candidates else None

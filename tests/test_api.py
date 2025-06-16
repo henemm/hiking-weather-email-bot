@@ -26,6 +26,7 @@ class TestWeatherAPI(unittest.TestCase):
                 "wind_gusts_10m_max": [30.0],
             },
             "hourly": {
+                "time": ["2024-03-15T00:00", "2024-03-15T01:00"],
                 "temperature_2m": [18.0, 17.0],
                 "apparent_temperature": [17.0, 16.0],
                 "precipitation_probability": [20, 30],
@@ -102,7 +103,7 @@ class TestWeatherAPI(unittest.TestCase):
                 "gewitter",
             ]
             for field in expected_fields:
-                self.assertIn(field, result)
+                self.assertIn(field, result["wetter"])
 
 
 if __name__ == "__main__":
