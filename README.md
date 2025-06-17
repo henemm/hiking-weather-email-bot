@@ -1,5 +1,9 @@
 # Hiking Weather Email Bot
 
+**Wichtiger Hinweis:**
+
+Die exakte Formatierung und der Inhalt aller generierten Wetterberichte (inklusive Kurz- und InReach-Versionen) sind verbindlich in der Datei [`SPEZIFIKATION.md`](./SPEZIFIKATION.md) definiert. Alle Code-Änderungen und Tests müssen strikt dieser Spezifikation entsprechen. Bei Abweichungen gilt ausschließlich die Spezifikation als maßgeblich.
+
 Ein Bot, der tägliche Wetterberichte für eine Wanderung per E-Mail versendet.
 
 ## Logik
@@ -631,3 +635,32 @@ Manganu→Petra Piana | Tag 34.1°C | Regen 20%@11(50%@15) | Wind 42km/h | Gewit
 | **Zeitpunkt Regen/Gewitter**  | `precipitation_probability`/`thunderstorm_probability` (hourly) | Zeitpunkt, an dem der Wert den **Schwellwert** aus der Konfiguration überschreitet; zusätzlich Zeitpunkt des Maximums | Schwellenwert aus `config.yaml`             |
 
 > **Wichtig:** Die Nachttemperatur im Abendreport ist **die minimale Temperatur über die ganze Nacht am letzten Punkt der heutigen Etappe (Schlafplatz)**. Es wird also nicht über mehrere Punkte aggregiert, sondern gezielt der Schlafplatz betrachtet.
+
+## Wetterbericht-Formate (Lang & Kurz)
+
+Die Wetterberichte werden gemäß der Spezifikation in [SPEZIFIKATION.md](./SPEZIFIKATION.md) erzeugt. Es gibt zwei Varianten:
+
+### Langbericht (z.B. für E-Mail)
+```
+Wetterbericht für Etappe 1 am 01.01.2023
+
+Nachttemperatur:
+  18°C
+
+Risiken für morgen:
+  Regenwahrscheinlichkeit: 25%@10:00 (60%@15:00)
+  Niederschlagsmenge: 2mm@10:00 (5mm@15:00)
+  Gewitterwahrscheinlichkeit: 40%@12:00 (70%@15:00)
+  Wind: 20km/h
+  Hitze: 32°C
+
+Gewitterwahrscheinlichkeit für übermorgen:
+  30%
+```
+
+### Kurzbericht (InReach)
+```
+Etappe 1 | Gewitter 40% @12 (70% @15) | Regen 25% 2mm @10 (60% 5mm @15) | Wind 20km/h | Hitze 32°C | Nacht 18°C
+```
+
+Weitere Details und Beispiele siehe [SPEZIFIKATION.md](./SPEZIFIKATION.md).

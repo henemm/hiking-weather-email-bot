@@ -23,11 +23,16 @@ class WeatherPoint:
     wind_speed: float
     wind_direction: float
     cloud_cover: float
+    rain_probability: Optional[float] = None  # Neue Feld für Regenwahrscheinlichkeit
 
 @dataclass
 class WeatherData:
     """Wetterdaten für einen Zeitraum"""
     points: List[WeatherPoint]
+    rain_time_threshold: Optional[str] = None
+    rain_time_max: Optional[str] = None
+    thunder_time_threshold: Optional[str] = None
+    thunder_time_max: Optional[str] = None
     
     def get_last_point(self) -> Optional[WeatherPoint]:
         """Gibt den letzten Messpunkt zurück"""
@@ -81,4 +86,10 @@ class WeatherReport:
     max_cloud_cover: float
     next_day_thunderstorm: Optional[float]  # Gewitter +1
     text: str  # Der generierte Berichtstext
-    thunderstorm_plus1: Optional[float] = None  # Gewitter +2 (übernächster Tag) 
+    max_precipitation_probability: Optional[float] = None  # Regenwahrscheinlichkeit
+    thunderstorm_plus1: Optional[float] = None  # Gewitter +2 (übernächster Tag)
+    # Neue Felder für Zeitpunkte
+    rain_time_threshold: Optional[str] = None
+    rain_time_max: Optional[str] = None
+    thunder_time_threshold: Optional[str] = None
+    thunder_time_max: Optional[str] = None 

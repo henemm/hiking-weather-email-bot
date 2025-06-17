@@ -86,6 +86,11 @@ class WeatherAggregator:
         # Gewitterwahrscheinlichkeit für übermorgen
         thunderstorm_plus1 = self._get_next_day_thunderstorm(weather.day_after_tomorrow)
         
+        # Zeitpunkte aus den Wetterdaten extrahieren (angenommen, WeatherData hat ein Attribut .meta oder .extras mit diesen Infos)
+        rain_time_threshold = weather.tomorrow.rain_time_threshold if weather.tomorrow else None
+        rain_time_max = weather.tomorrow.rain_time_max if weather.tomorrow else None
+        thunder_time_threshold = weather.tomorrow.thunder_time_threshold if weather.tomorrow else None
+        thunder_time_max = weather.tomorrow.thunder_time_max if weather.tomorrow else None
         return WeatherReport(
             mode=ReportMode.EVENING,
             stage_name=stage_name,
@@ -94,12 +99,17 @@ class WeatherAggregator:
             max_temperature=max_values.get("temperature", 0),
             max_feels_like=max_values.get("feels_like", 0),
             max_precipitation=max_values.get("precipitation", 0),
+            max_precipitation_probability=max_values.get("precipitation_probability", None),
             max_thunderstorm_probability=max_values.get("thunderstorm_probability"),
             max_wind_speed=max_values.get("wind_speed", 0),
             max_cloud_cover=max_values.get("cloud_cover", 0),
             next_day_thunderstorm=self._get_next_day_thunderstorm(weather.tomorrow),
             thunderstorm_plus1=thunderstorm_plus1,
-            text=""  # Wird später generiert
+            text="",  # Wird später generiert
+            rain_time_threshold=rain_time_threshold,
+            rain_time_max=rain_time_max,
+            thunder_time_threshold=thunder_time_threshold,
+            thunder_time_max=thunder_time_max
         )
     
     def aggregate_morning_report(
@@ -133,6 +143,7 @@ class WeatherAggregator:
             max_temperature=max_values.get("temperature", 0),
             max_feels_like=max_values.get("feels_like", 0),
             max_precipitation=max_values.get("precipitation", 0),
+            max_precipitation_probability=max_values.get("precipitation_probability", None),
             max_thunderstorm_probability=max_values.get("thunderstorm_probability"),
             max_wind_speed=max_values.get("wind_speed", 0),
             max_cloud_cover=max_values.get("cloud_cover", 0),
@@ -173,6 +184,7 @@ class WeatherAggregator:
                 max_temperature=max_values.get("temperature", 0),
                 max_feels_like=max_values.get("feels_like", 0),
                 max_precipitation=max_values.get("precipitation", 0),
+                max_precipitation_probability=max_values.get("precipitation_probability", None),
                 max_thunderstorm_probability=max_values.get("thunderstorm_probability"),
                 max_wind_speed=max_values.get("wind_speed", 0),
                 max_cloud_cover=max_values.get("cloud_cover", 0),

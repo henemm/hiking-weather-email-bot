@@ -1,0 +1,45 @@
+{
+    "today": {
+        "hourly": [
+            {"time": "2025-06-17T00:00", "temperature_2m": 15, "apparent_temperature": 14, "wind_speed_10m": 20, "wind_direction_10m": 45, "precipitation_probability": 0, "thunderstorm_probability": 0, "cloud_cover": 20},
+            {"time": "2025-06-17T01:00", "temperature_2m": 14, "apparent_temperature": 13, "wind_speed_10m": 25, "wind_direction_10m": 50, "precipitation_probability": 0, "thunderstorm_probability": 0, "cloud_cover": 30},
+            {"time": "2025-06-17T02:00", "temperature_2m": 13, "apparent_temperature": 12, "wind_speed_10m": 30, "wind_direction_10m": 55, "precipitation_probability": 0, "thunderstorm_probability": 0, "cloud_cover": 40},
+            {"time": "2025-06-17T03:00", "temperature_2m": 12, "apparent_temperature": 11, "wind_speed_10m": 35, "wind_direction_10m": 60, "precipitation_probability": 0, "thunderstorm_probability": 0, "cloud_cover": 50},
+            {"time": "2025-06-17T04:00", "temperature_2m": 11, "apparent_temperature": 10, "wind_speed_10m": 40, "wind_direction_10m": 65, "precipitation_probability": 0, "thunderstorm_probability": 0, "cloud_cover": 60},
+            {"time": "2025-06-17T05:00", "temperature_2m": 10, "apparent_temperature": 9, "wind_speed_10m": 45, "wind_direction_10m": 70, "precipitation_probability": 0, "thunderstorm_probability": 0, "cloud_cover": 70},
+            {"time": "2025-06-17T06:00", "apparent_temperature": 8, "wind_speed_10m": 50, "wind_direction_10m": 75, "precipitation_probability": 0, "thunderstorm_probability": 0, "cloud_cover": 80, "temperature_2m": 9},
+            {"time": "2025-06-17T07:00", "apparent_temperature": 7, "wind_speed_10m": 55, "wind_direction_10m": 80, "precipitation_probability": 0, "thunderstorm_probability": 0, "cloud_cover": 90, "temperature_2m": 8},
+            {"time": "2025-06-17T08:00", "apparent_temperature": 6, "wind_speed_10m": 60, "wind_direction_10m": 85, "precipitation_probability": 0, "thunderstorm_probability": 0, "cloud_cover": 100, "temperature_2m": 7},
+            {"time": "2025-06-17T09:00", "apparent_temperature": 5, "wind_speed_10m": 65, "wind_direction_10m": 90, "precipitation_probability": 0, "thunderstorm_probability": 0, "cloud_cover": 100, "temperature_2m": 6},
+            {"time": "2025-06-17T10:00", "apparent_temperature": 4, "wind_speed_10m": 70, "wind_direction_10m": 95, "precipitation_probability": 0, "thunderstorm_probability": 0, "cloud_cover": 100, "temperature_2m": 5},
+            {"time": "2025-06-17T11:00", "apparent_temperature": 3, "wind_speed_10m": 75, "wind_direction_10m": 100, "precipitation_probability": 0, "thunderstorm_probability": 0, "cloud_cover": 100, "temperature_2m": 4},
+            {"time": "2025-06-17T12:00", "apparent_temperature": 2, "wind_speed_10m": 80, "wind_direction_10m": 105, "precipitation_probability": 0, "thunderstorm_probability": 0, "cloud_cover": 100, "temperature_2m": 3},
+            {"time": "2025-06-17T13:00", "apparent_temperature": 1, "wind_speed_10m": 85, "wind_direction_10m": 110, "precipitation_probability": 0, "thunderstorm_probability": 0, "cloud_cover": 100, "temperature_2m": 2},
+            {"time": "2025-06-17T14:00", "apparent_temperature": 0, "wind_speed_10m": 90, "wind_direction_10m": 115, "precipitation_probability": 25, "thunderstorm_probability": 0, "cloud_cover": 100, "temperature_2m": 1},
+            {"time": "2025-06-17T15:00", "apparent_temperature": -1, "wind_speed_10m": 95, "wind_direction_10m": 120, "precipitation_probability": 30, "thunderstorm_probability": 0, "cloud_cover": 100, "temperature_2m": 0},
+            {"time": "2025-06-17T16:00", "apparent_temperature": -2, "wind_speed_10m": 100, "wind_direction_10m": 125, "precipitation_probability": 40, "thunderstorm_probability": 35, "cloud_cover": 100, "temperature_2m": -1},
+            {"time": "2025-06-17T17:00", "apparent_temperature": -3, "wind_speed_10m": 105, "wind_direction_10m": 130, "precipitation_probability": 50, "thunderstorm_probability": 50, "cloud_cover": 100, "temperature_2m": -2},
+            {"time": "2025-06-17T18:00", "apparent_temperature": -4, "wind_speed_10m": 110, "wind_direction_10m": 135, "precipitation_probability": 45, "thunderstorm_probability": 45, "cloud_cover": 100, "temperature_2m": -3},
+            {"time": "2025-06-17T19:00", "apparent_temperature": -5, "wind_speed_10m": 115, "wind_direction_10m": 140, "precipitation_probability": 30, "thunderstorm_probability": 30, "cloud_cover": 100, "temperature_2m": -4},
+            {"time": "2025-06-17T20:00", "apparent_temperature": -6, "wind_speed_10m": 120, "wind_direction_10m": 145, "precipitation_probability": 20, "thunderstorm_probability": 20, "cloud_cover": 100, "temperature_2m": -5},
+            {"time": "2025-06-17T21:00", "apparent_temperature": -7, "wind_speed_10m": 125, "wind_direction_10m": 150, "precipitation_probability": 10, "thunderstorm_probability": 10, "cloud_cover": 100, "temperature_2m": -6},
+            {"time": "2025-06-17T22:00", "apparent_temperature": -8, "wind_speed_10m": 130, "wind_direction_10m": 155, "precipitation_probability": 5, "thunderstorm_probability": 5, "cloud_cover": 100, "temperature_2m": -7},
+            {"time": "2025-06-17T23:00", "apparent_temperature": -9, "wind_speed_10m": 135, "wind_direction_10m": 160, "precipitation_probability": 0, "thunderstorm_probability": 0, "cloud_cover": 100, "temperature_2m": -8}
+        ]
+    },
+    "tomorrow": {
+        "hourly": [
+            {"time": "2025-06-18T14:00", "temperature_2m": 1, "apparent_temperature": 0, "wind_speed_10m": 90, "wind_direction_10m": 115, "precipitation_probability": 25, "thunderstorm_probability": 0, "cloud_cover": 100},
+            {"time": "2025-06-18T15:00", "temperature_2m": 0, "apparent_temperature": -1, "wind_speed_10m": 95, "wind_direction_10m": 120, "precipitation_probability": 30, "thunderstorm_probability": 0, "cloud_cover": 100},
+            {"time": "2025-06-18T16:00", "temperature_2m": -1, "apparent_temperature": -2, "wind_speed_10m": 100, "wind_direction_10m": 125, "precipitation_probability": 40, "thunderstorm_probability": 35, "cloud_cover": 100},
+            {"time": "2025-06-18T17:00", "temperature_2m": -2, "apparent_temperature": -3, "wind_speed_10m": 105, "wind_direction_10m": 130, "precipitation_probability": 50, "thunderstorm_probability": 50, "cloud_cover": 100},
+            {"time": "2025-06-18T18:00", "temperature_2m": -3, "apparent_temperature": -4, "wind_speed_10m": 110, "wind_direction_10m": 135, "precipitation_probability": 45, "thunderstorm_probability": 45, "cloud_cover": 100},
+            {"time": "2025-06-18T19:00", "temperature_2m": -4, "apparent_temperature": -5, "wind_speed_10m": 115, "wind_direction_10m": 140, "precipitation_probability": 30, "thunderstorm_probability": 30, "cloud_cover": 100},
+            {"time": "2025-06-18T20:00", "temperature_2m": -5, "apparent_temperature": -6, "wind_speed_10m": 120, "wind_direction_10m": 145, "precipitation_probability": 20, "thunderstorm_probability": 20, "cloud_cover": 100},
+            {"time": "2025-06-18T21:00", "temperature_2m": -6, "apparent_temperature": -7, "wind_speed_10m": 125, "wind_direction_10m": 150, "precipitation_probability": 10, "thunderstorm_probability": 10, "cloud_cover": 100},
+            {"time": "2025-06-18T22:00", "temperature_2m": -7, "apparent_temperature": -8, "wind_speed_10m": 130, "wind_direction_10m": 155, "precipitation_probability": 5, "thunderstorm_probability": 5, "cloud_cover": 100},
+            {"time": "2025-06-18T23:00", "temperature_2m": -8, "apparent_temperature": -9, "wind_speed_10m": 135, "wind_direction_10m": 160, "precipitation_probability": 0, "thunderstorm_probability": 0, "cloud_cover": 100}
+        ]
+    },
+    "day_after_tomorrow": { "hourly": [ {"time": "2025-06-19T00:00", "temperature_2m": 15, "apparent_temperature": 14, "wind_speed_10m": 20, "wind_direction_10m": 45, "precipitation_probability": 0, "thunderstorm_probability": 0, "cloud_cover": 20} ] }
+} 

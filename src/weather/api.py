@@ -154,7 +154,18 @@ class WeatherAPIClient:
                     point_data
                 ))
             
-            return WeatherData(points=points)
+            # Zeitpunkte extrahieren, falls vorhanden
+            rain_time_threshold = response.get('regen_ab') or response.get('rain_time_threshold')
+            rain_time_max = response.get('regen_max_zeit') or response.get('rain_time_max')
+            thunder_time_threshold = response.get('gewitter_ab') or response.get('thunder_time_threshold')
+            thunder_time_max = response.get('gewitter_max_zeit') or response.get('thunder_time_max')
+            return WeatherData(
+                points=points,
+                rain_time_threshold=rain_time_threshold,
+                rain_time_max=rain_time_max,
+                thunder_time_threshold=thunder_time_threshold,
+                thunder_time_max=thunder_time_max
+            )
             
         except (KeyError, IndexError) as e:
             raise WeatherAPIParseError(f"Unerwartetes API-Antwortformat: {str(e)}") 

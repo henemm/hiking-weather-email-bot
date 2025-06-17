@@ -1,0 +1,8 @@
+# Abendmeldung (jeden Tag 19:00 Uhr)
+0 19 * * * cd /opt/hiking-weather-email-bot && /bin/bash -c 'source venv/bin/activate && python -m src.main --modus evening'
+
+# Morgenmeldung (jeden Tag 6:30 Uhr)
+30 4 * * * cd /opt/hiking-weather-email-bot && /bin/bash -c 'source venv/bin/activate && python -m src.main --modus morning'
+
+# Tages-Warnung (alle 30 Min zwischen 11–17 Uhr)
+*/30 09-17 * * * cd /opt/hiking-weather-email-bot && /bin/bash -c 'source venv/bin/activate && python -m src.main --modus day' 
