@@ -1,5 +1,5 @@
-requests
-pyyaml
-python-dotenv
+requests>=2.31.0
+pyyaml>=6.0.1
+python-dotenv>=1.0.0
 gpxpy>=1.6.2
 geopy>=2.4.1

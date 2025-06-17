@@ -2,23 +2,23 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import json
+import json  # Wird für Testdaten benötigt
 import logging
 import sys
 import traceback
-from typing import Dict, Any, Optional, Tuple
+from typing import Dict, Any, Optional, Tuple, List
 from pathlib import Path
 import os
 from dotenv import load_dotenv
 import datetime
-import requests
-from wetter import wetterdaten, kurztext, config
-from emailversand import sende_email, EmailError
+import yaml
+import math
 
-from config import config, ConfigError
-from etappen import lade_heutige_etappe, lade_etappen
+from wetter import wetterdaten, kurztext
+from wetter.config import ConfigError
+from emailversand import sende_email, EmailError
+from src.etappen import lade_heutige_etappe, lade_etappen
 from wetter.fetch import hole_wetterdaten, fetch_weather_data
-from wetter.analyse import generiere_wetterbericht
 from wetter.kurztext import generiere_kurznachricht
 from wetter.delta import delta_warnung
 
@@ -83,7 +83,7 @@ def parse_args() -> argparse.Namespace:
         parser.print_help()
         sys.exit(1)
 
-def lade_konfiguration():
+def lade_konfiguration() -> Dict[str, Any]:
     """Lädt die Konfiguration aus der YAML-Datei."""
     try:
         with open('config.yaml', 'r', encoding='utf-8') as f:
@@ -98,28 +98,75 @@ def lade_konfiguration():
         logger.error(f"Fehler beim Laden der Konfiguration: {str(e)}")
         sys.exit(1)
 
-def lade_etappen():
-    """Lädt die Etappendaten aus der YAML-Datei."""
-    try:
-        with open('etappen.yaml', 'r', encoding='utf-8') as f:
-            return yaml.safe_load(f)
-    except FileNotFoundError:
-        logger.error("Etappendatei etappen.yaml nicht gefunden")
-        return None
-    except yaml.YAMLError:
-        logger.error("Ungültiges YAML-Format in etappen.yaml")
-        return None
-    except Exception as e:
-        logger.error(f"Fehler beim Laden der Etappendaten: {str(e)}")
-        return None
-
-def hole_wetterdaten(ort, api_key):
-    """Holt die Wetterdaten von der OpenWeatherMap API."""
-    try:
-        return wetterdaten.hole_wetterdaten(ort, api_key)
-    except Exception as e:
-        logger.error(f"Fehler beim Abrufen der Wetterdaten: {str(e)}")
-        return None
+def hole_wetterdaten_fuer_punkte(punkte, datum: Optional[datetime.date] = None):
+    daten = []
+    for punkt in punkte:
+        lat = punkt["lat"]
+        lon = punkt["lon"]
+        d = wetterdaten.hole_wetterdaten(lat, lon)
+        daten.append(d)
+    def safe_max(values, default=0):
+        vals = [v for v in values if v is not None and not (isinstance(v, float) and math.isnan(v))]
+        return max(vals) if vals else default
+    def safe_min(values, default=0):
+        vals = [v for v in values if v is not None and not (isinstance(v, float) and math.isnan(v))]
+        return min(vals) if vals else default
+    if daten:
+        wetter = {}
+        if datum:
+            tag_str = datum.strftime("%Y-%m-%d")
+            def get_hourly_for_day(d, key):
+                times = d.get("hourly", {}).get("time", [])
+                values = d.get("hourly", {}).get(key, [])
+                filtered = [v for t, v in zip(times, values) if t.startswith(tag_str)]
+                return filtered if filtered else []
+            def get_daily_for_day(d, key):
+                if "daily" in d and key in d["daily"] and "time" in d["daily"]:
+                    for i, t in enumerate(d["daily"]["time"]):
+                        if t == tag_str:
+                            return d["daily"][key][i]
+                return None
+            # Maximalwerte über alle Punkte und Stunden
+            temp_vals = [v for d in daten for v in get_hourly_for_day(d, "temperature_2m")]
+            temp_gefuehlt_vals = [v for d in daten for v in get_hourly_for_day(d, "apparent_temperature")]
+            wind_vals = [v for d in daten for v in get_hourly_for_day(d, "wind_speed_10m")]
+            regen_vals = [v for d in daten for v in get_hourly_for_day(d, "precipitation_probability")]
+            gewitter_vals = [v for d in daten for v in get_hourly_for_day(d, "thunderstorm_probability") if v is not None]
+            # Fallback auf daily falls keine Stundenwerte vorhanden
+            if not temp_vals:
+                temp_vals = [get_daily_for_day(d, "temperature_2m_max") for d in daten]
+            if not temp_gefuehlt_vals:
+                temp_gefuehlt_vals = [get_daily_for_day(d, "apparent_temperature_max") for d in daten]
+            if not wind_vals:
+                wind_vals = [get_daily_for_day(d, "wind_speed_10m_max") for d in daten]
+            if not regen_vals:
+                regen_vals = [get_daily_for_day(d, "precipitation_probability_max") for d in daten]
+            if not gewitter_vals:
+                gewitter_vals = [0]
+            wetter["temp"] = safe_max(temp_vals, 0)
+            wetter["temp_gefuehlt"] = safe_max(temp_gefuehlt_vals, 0)
+            wetter["wind_geschwindigkeit"] = safe_max(wind_vals, 0)
+            wetter["wind_richtung"] = "NO"  # Platzhalter
+            wetter["regen"] = safe_max(regen_vals, 0)
+            wetter["gewitter"] = safe_max(gewitter_vals, 0)
+            wetter["regen_zeit"] = datum.strftime("%Y-%m-%dT00:00")
+            wetter["gewitter_zeit"] = datum.strftime("%Y-%m-%dT00:00")
+            # Nachttemperatur: Minimum über alle Punkte (aus daily)
+            nacht_temp_vals = [get_daily_for_day(d, "temperature_2m_min") for d in daten]
+            wetter["nacht_temp"] = safe_min(nacht_temp_vals, 0)
+        else:
+            # Abendmodus: wie gehabt, ggf. anpassen falls gewünscht
+            wetter["temp"] = safe_max([d.get("hourly", {}).get("temperature_2m", [None])[0] for d in daten], 0)
+            wetter["temp_gefuehlt"] = safe_max([d.get("hourly", {}).get("apparent_temperature", [None])[0] for d in daten], 0)
+            wetter["wind_geschwindigkeit"] = safe_max([d.get("hourly", {}).get("wind_speed_10m", [None])[0] for d in daten], 0)
+            wetter["wind_richtung"] = "NO"
+            wetter["regen"] = safe_max([d.get("hourly", {}).get("precipitation_probability", [None])[0] for d in daten], 0)
+            wetter["gewitter"] = safe_max([d.get("hourly", {}).get("thunderstorm_probability", [None])[0] for d in daten], 0)
+            wetter["regen_zeit"] = daten[0].get("hourly", {}).get("time", [""])[0] if daten and "hourly" in daten[0] and "time" in daten[0]["hourly"] else ""
+            wetter["gewitter_zeit"] = daten[0].get("hourly", {}).get("time", [""])[0] if daten and "hourly" in daten[0] and "time" in daten[0]["hourly"] else ""
+        return {"wetter": wetter}
+    else:
+        return {"wetter": {"temp": 0, "temp_gefuehlt": 0, "wind_geschwindigkeit": 0, "wind_richtung": "", "regen": 0, "gewitter": 0, "regen_zeit": "", "gewitter_zeit": "", "nacht_temp": 0}}
 
 def generiere_wetterbericht(wetterdaten, modus="abend", start_date=None, etappen_data=None):
     """Generiert den Wetterbericht basierend auf den Wetterdaten und dem Modus."""
@@ -141,43 +188,32 @@ def generiere_wetterbericht(wetterdaten, modus="abend", start_date=None, etappen
         logger.error(f"Fehler beim Generieren des Wetterberichts: {str(e)}")
         return None
 
-def sende_email(empfaenger, betreff, nachricht, smtp_server, smtp_port, benutzername, passwort):
-    """Sendet die E-Mail mit dem Wetterbericht."""
-    try:
-        email_sender.sende_email(
-            empfaenger=empfaenger,
-            betreff=betreff,
-            nachricht=nachricht,
-            smtp_server=smtp_server,
-            smtp_port=smtp_port,
-            benutzername=benutzername,
-            passwort=passwort
-        )
-        return True
-    except Exception as e:
-        logger.error(f"Fehler beim Senden der E-Mail: {str(e)}")
-        return False
-
-def sende_inreach_nachricht(nachricht, inreach_email, smtp_server, smtp_port, benutzername, passwort):
+def sende_inreach_nachricht(nachricht, inreach_email, smtp_server, smtp_port, benutzername, passwort, smtp_config):
     """Sendet die InReach-Nachricht."""
     try:
-        email_sender.sende_email(
-            empfaenger=inreach_email,
-            betreff="",  # Leerer Betreff für InReach
-            nachricht=nachricht,
-            smtp_server=smtp_server,
-            smtp_port=smtp_port,
-            benutzername=benutzername,
-            passwort=passwort
+        sende_email(
+            nachricht,
+            inreach_email,
+            smtp_server,
+            smtp_port,
+            benutzername,
+            passwort
         )
         return True
     except Exception as e:
         logger.error(f"Fehler beim Senden der InReach-Nachricht: {str(e)}")
         return False
 
-def lade_abend_wetterdaten(config):
+def max_ohne_none(liste, default=0):
+    werte = [v for v in liste if v is not None]
+    return max(werte) if werte else default
+
+def lade_abend_wetterdaten(config: Dict[str, Any]) -> Dict[str, Any]:
     etappen = lade_etappen()
-    startdatum = config["startdatum"]
+    if not etappen:
+        raise ValueError("Etappendaten konnten nicht geladen werden")
+    startdatum_str = config["startdatum"]
+    startdatum = datetime.datetime.strptime(startdatum_str, "%Y-%m-%d").date()
     heute = datetime.date.today()
     differenz = (heute - startdatum).days
     if differenz < 0 or differenz >= len(etappen):
@@ -188,131 +224,76 @@ def lade_abend_wetterdaten(config):
     # Nachttemperatur für heute, letzter Punkt
     daten_nacht = fetch_weather_data(letzter_punkt["lat"], letzter_punkt["lon"], heute)
     nacht_temp = daten_nacht["daily"]["temperature_2m_min"][0] if daten_nacht["daily"]["temperature_2m_min"][0] is not None else 0
-    
-    # Morgige Etappe (E2)
+    nacht_temp_gefuehlt = daten_nacht["daily"].get("apparent_temperature_min", [nacht_temp])[0]
+    # Morgige Etappe
     if differenz + 1 >= len(etappen):
         raise ValueError("Keine morgige Etappe mehr vorhanden.")
     etappe_morgen = etappen[differenz + 1]
     punkte_morgen = etappe_morgen["punkte"]
     morgen = heute + datetime.timedelta(days=1)
-    alle_daten_morgen = []
-    for punkt in punkte_morgen:
-        daten = fetch_weather_data(punkt["lat"], punkt["lon"], morgen)
-        alle_daten_morgen.append(daten)
-    
-    # Übernächste Etappe (E3)
-    daten_uebermorgen = None
+    alle_daten_morgen = [fetch_weather_data(p["lat"], p["lon"], morgen) for p in punkte_morgen]
+    # Maximalwerte für morgen
+    hitze = max([d["daily"]["apparent_temperature_max"][0] for d in alle_daten_morgen if d["daily"]["apparent_temperature_max"][0] is not None], default=0)
+    regen = max([d["daily"]["precipitation_probability_max"][0] for d in alle_daten_morgen if d["daily"]["precipitation_probability_max"][0] is not None], default=0)
+    wind = max([d["daily"]["wind_speed_10m_max"][0] for d in alle_daten_morgen if d["daily"]["wind_speed_10m_max"][0] is not None], default=0)
+    gewitter = max_ohne_none([max_ohne_none(d["hourly"]["thunderstorm_probability"]) for d in alle_daten_morgen if d["hourly"]["thunderstorm_probability"]], default=0)
+    # Gewittergefahr +1 (übermorgen)
     if differenz + 2 < len(etappen):
         etappe_uebermorgen = etappen[differenz + 2]
         punkte_uebermorgen = etappe_uebermorgen["punkte"]
         uebermorgen = heute + datetime.timedelta(days=2)
-        alle_daten_uebermorgen = []
-        for punkt in punkte_uebermorgen:
-            daten = fetch_weather_data(punkt["lat"], punkt["lon"], uebermorgen)
-            alle_daten_uebermorgen.append(daten)
-        # Aggregation für E3 Gewitter
-        gewitter_values_e3 = [max(d["hourly"]["thunderstorm_probability"]) for d in alle_daten_uebermorgen if d["hourly"]["thunderstorm_probability"] and all(x is not None for x in d["hourly"]["thunderstorm_probability"])]
-        gewitter_e3 = max(gewitter_values_e3) if gewitter_values_e3 else 0
-        daten_uebermorgen = {"gewitter_plus1": gewitter_e3}
+        alle_daten_uebermorgen = [fetch_weather_data(p["lat"], p["lon"], uebermorgen) for p in punkte_uebermorgen]
+        gewitter_plus1 = max_ohne_none([max_ohne_none(d["hourly"]["thunderstorm_probability"]) for d in alle_daten_uebermorgen if d["hourly"]["thunderstorm_probability"]], default=0)
     else:
-        daten_uebermorgen = {"gewitter_plus1": None}
-    
-    # Aggregation für E2 Tageswerte
-    hitze_values = [d["daily"]["apparent_temperature_max"][0] for d in alle_daten_morgen if d["daily"]["apparent_temperature_max"][0] is not None]
-    regen_values = [d["daily"]["precipitation_probability_max"][0] for d in alle_daten_morgen if d["daily"]["precipitation_probability_max"][0] is not None]
-    wind_values = [d["daily"]["wind_speed_10m_max"][0] for d in alle_daten_morgen if d["daily"]["wind_speed_10m_max"][0] is not None]
-    gewitter_values = [max(d["hourly"]["thunderstorm_probability"]) for d in alle_daten_morgen if d["hourly"]["thunderstorm_probability"] and all(x is not None for x in d["hourly"]["thunderstorm_probability"])]
-    
-    # Schwellenwerte aus config
-    regen_schwelle = config["schwellen"]["regen"]
-    gewitter_schwelle = config["schwellen"]["gewitter"]
-    
-    # Frühester Zeitpunkt, an dem Schwellenwert überschritten wird (über alle Punkte)
-    regen_ab_candidates = []
-    gewitter_ab_candidates = []
-    regen_max_zeit_candidates = []
-    for d in alle_daten_morgen:
-        times = d["hourly"]["time"]
-        regen_vals = d["hourly"]["precipitation_probability"]
-        gewitter_vals = d["hourly"]["thunderstorm_probability"]
-        # Regen
-        for t, v in zip(times, regen_vals):
-            if v is not None and v >= regen_schwelle:
-                regen_ab_candidates.append(t)
-                break
-        # Zeitpunkt des maximalen Regenrisikos
-        if regen_vals:
-            max_regen_idx = regen_vals.index(max(regen_vals))
-            regen_max_zeit_candidates.append(times[max_regen_idx])
-        # Gewitter
-        for t, v in zip(times, gewitter_vals):
-            if v is not None and v >= gewitter_schwelle:
-                gewitter_ab_candidates.append(t)
-                break
-    
-    regen_ab = min(regen_ab_candidates) if regen_ab_candidates else None
-    gewitter_ab = min(gewitter_ab_candidates) if gewitter_ab_candidates else None
-    regen_max_zeit = min(regen_max_zeit_candidates) if regen_max_zeit_candidates else None
-    
-    # Setze Defaults, wenn keine Werte vorhanden sind
-    hitze = max(hitze_values) if hitze_values else 0
-    regen = max(regen_values) if regen_values else 0
-    wind = max(wind_values) if wind_values else 0
-    gewitter = max(gewitter_values) if gewitter_values else 0
-    
+        gewitter_plus1 = None
     return {
         "wetter": {
             "nacht_temp": nacht_temp,
+            "nacht_temp_gefuehlt": nacht_temp_gefuehlt,
             "hitze": hitze,
             "regen": regen,
             "wind": wind,
             "gewitter": gewitter,
-            "regen_ab": regen_ab,
-            "gewitter_ab": gewitter_ab,
-            "regen_max_zeit": regen_max_zeit,
-            "gewitter_plus1": daten_uebermorgen["gewitter_plus1"]
+            "gewitter_plus1": gewitter_plus1
         }
     }
 
-def lade_morgen_wetterdaten(etappe: Dict[str, Any]) -> Dict[str, Any]:
-    """Lade Wetterdaten für den Morgenbericht."""
-    wetterdaten = hole_wetterdaten(etappe["punkte"], config["api_key"])
-    wetter = wetterdaten["wetter"]
-
-    # Gewittervorhersage für den nächsten Tag (analog zu lade_abend_wetterdaten)
+def lade_morgen_wetterdaten(etappe: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, Any]:
     etappen = lade_etappen()
+    if not etappen:
+        raise DataError("Etappendaten konnten nicht geladen werden")
+    startdatum_str = config["startdatum"]
+    startdatum = datetime.datetime.strptime(startdatum_str, "%Y-%m-%d").date()
     heute = datetime.date.today()
-    # Finde Index der aktuellen Etappe
-    idx = None
-    for i, e in enumerate(etappen):
-        if e["name"] == etappe["name"]:
-            idx = i
-            break
-    if idx is not None and idx + 1 < len(etappen):
-        etappe_morgen = etappen[idx + 1]
+    differenz = (heute - startdatum).days
+    if differenz < 0 or differenz >= len(etappen):
+        raise ValueError("Kein gültiger Etappentag – liegt außerhalb des definierten Zeitraums.")
+    # Heutige Etappe
+    etappe_heute = etappen[differenz]
+    punkte_heute = etappe_heute["punkte"]
+    alle_daten_heute = [fetch_weather_data(p["lat"], p["lon"], heute) for p in punkte_heute]
+    # Maximalwerte für heute
+    hitze = max([d["daily"]["apparent_temperature_max"][0] for d in alle_daten_heute if d["daily"]["apparent_temperature_max"][0] is not None], default=0)
+    regen = max([d["daily"]["precipitation_probability_max"][0] for d in alle_daten_heute if d["daily"]["precipitation_probability_max"][0] is not None], default=0)
+    wind = max([d["daily"]["wind_speed_10m_max"][0] for d in alle_daten_heute if d["daily"]["wind_speed_10m_max"][0] is not None], default=0)
+    gewitter = max_ohne_none([max_ohne_none(d["hourly"]["thunderstorm_probability"]) for d in alle_daten_heute if d["hourly"]["thunderstorm_probability"]], default=0)
+    # Gewittergefahr +1 (morgen)
+    if differenz + 1 < len(etappen):
+        etappe_morgen = etappen[differenz + 1]
         punkte_morgen = etappe_morgen["punkte"]
         morgen = heute + datetime.timedelta(days=1)
-        alle_daten_morgen = []
-        for punkt in punkte_morgen:
-            daten = fetch_weather_data(punkt["lat"], punkt["lon"], morgen)
-            alle_daten_morgen.append(daten)
-        gewitter_values_plus1 = [max(d["hourly"]["thunderstorm_probability"]) for d in alle_daten_morgen if d["hourly"]["thunderstorm_probability"] and all(x is not None for x in d["hourly"]["thunderstorm_probability"])]
-        gewitter_plus1 = max(gewitter_values_plus1) if gewitter_values_plus1 else 0
+        alle_daten_morgen = [fetch_weather_data(p["lat"], p["lon"], morgen) for p in punkte_morgen]
+        gewitter_plus1 = max_ohne_none([max_ohne_none(d["hourly"]["thunderstorm_probability"]) for d in alle_daten_morgen if d["hourly"]["thunderstorm_probability"]], default=0)
     else:
         gewitter_plus1 = None
-
     return {
-        "etappe": etappe["name"],
-        "regen": wetter.get("regen"),
-        "regen_ab": wetter.get("regen_ab"),
-        "regen_max_zeit": wetter.get("regen_max_zeit"),
-        "wind": wetter.get("wind"),
-        "gewitter": wetter.get("gewitter"),
-        "gewitter_ab": wetter.get("gewitter_ab"),
-        "gewitter_max_zeit": wetter.get("gewitter_max_zeit"),
-        "gewitter_plus1": gewitter_plus1,
-        "regen_schwelle": config["schwellen"]["regen"],
-        "gewitter_schwelle": config["schwellen"]["gewitter"]
+        "wetter": {
+            "hitze": hitze,
+            "regen": regen,
+            "wind": wind,
+            "gewitter": gewitter,
+            "gewitter_plus1": gewitter_plus1
+        }
     }
 
 def lade_daten(args: argparse.Namespace, etappe: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, Any]:
@@ -397,9 +378,9 @@ def lade_daten(args: argparse.Namespace, etappe: Dict[str, Any], config: Dict[st
         elif args.modus == "abend":
             daten = lade_abend_wetterdaten(config)
         elif args.modus == "morgen":
-            daten = lade_morgen_wetterdaten(etappe)
+            daten = lade_morgen_wetterdaten(etappe, config)
         else:
-            daten = hole_wetterdaten(etappe["punkte"], config["api_key"])
+            daten = hole_wetterdaten_fuer_punkte(etappe["punkte"])
         if not isinstance(daten, dict):
             raise DataError("Ungültiges Datenformat: Kein Dictionary")
         if "wetter" not in daten:
@@ -425,7 +406,12 @@ def wetter_dict_fuer_inreach(wetter: dict, etappe: dict) -> dict:
         "gewitter": wetter.get("gewitter"),
         "gewitter_ab": wetter.get("gewitter_ab"),
         "gewitter_max_zeit": wetter.get("gewitter_max_zeit"),
-        "gewitter_plus1": wetter.get("gewitter_plus1")
+        "gewitter_plus1": wetter.get("gewitter_plus1"),
+        # Pflichtfelder für generiere_kurznachricht:
+        "temp": wetter.get("temp", 0),
+        "temp_gefuehlt": wetter.get("temp_gefuehlt", 0),
+        "wind_geschwindigkeit": wetter.get("wind_geschwindigkeit", 0),
+        "wind_richtung": wetter.get("wind_richtung", "")
     }
 
 def generiere_bericht(
@@ -444,33 +430,57 @@ def generiere_bericht(
     Returns:
         Tuple aus (Berichtstext, Erfolg)
     """
-    try:
-        if args.inreach:
-            return generiere_kurznachricht(wetter_dict_fuer_inreach(wetter, etappe)), True
-        else:
-            return generiere_wetterbericht(
-                wetter["nacht_temp"],
-                wetter["hitze"],
-                wetter["regen"],
-                wetter["wind"],
-                wetter["gewitter"],
-                wetter.get("regen_ab"),
-                wetter.get("gewitter_ab"),
-                wetter.get("regen_max_zeit"),
-                wetter.get("gewitter_max_zeit"),
-                etappe.get("name")
+    if args.inreach:
+        return generiere_kurznachricht(
+            wetterdaten=wetter,
+            modus=args.modus,
+            inreach=args.inreach,
+            etappenname=etappe["name"]
+        ), True
+    elif args.modus == "morgen":
+        # Für den Morgenmodus direkt generiere_kurznachricht aufrufen
+        return generiere_kurznachricht(
+            wetterdaten=wetter,
+            modus="morgen",
+            inreach=args.inreach,
+            etappenname=etappe["name"]
+        ), True
+    else:
+        # Werfen explizit Exception bei fehlenden Keys
+        try:
+            return generiere_kurznachricht(
+                wetterdaten=wetter,
+                modus=args.modus,
+                inreach=args.inreach,
+                etappenname=etappe["name"]
             ), True
-    except Exception as e:
-        logger.error(f"Fehler beim Generieren des Berichts: {str(e)}")
-        return f"Fehler beim Generieren des Wetterberichts: {str(e)}", False
+        except Exception as e:
+            logger.error(f"Fehler beim Generieren des Berichts: {str(e)}")
+            raise ReportError(f"Fehler beim Generieren des Wetterberichts: {str(e)}")
 
-def sende_bericht(bericht: str, args: argparse.Namespace) -> bool:
+def wetterdaten_dict(wetter, etappe, config):
+    return {
+        "etappe": etappe["name"],
+        "regen": wetter.get("regen"),
+        "regen_ab": wetter.get("regen_ab"),
+        "regen_max_zeit": wetter.get("regen_max_zeit"),
+        "wind": wetter.get("wind"),
+        "gewitter": wetter.get("gewitter"),
+        "gewitter_ab": wetter.get("gewitter_ab"),
+        "gewitter_max_zeit": wetter.get("gewitter_max_zeit"),
+        "gewitter_plus1": wetter.get("gewitter_plus1"),
+        "regen_schwelle": config["schwellen"]["regen"],
+        "gewitter_schwelle": config["schwellen"]["gewitter"]
+    }
+
+def sende_bericht(bericht: str, args: argparse.Namespace, config: dict) -> bool:
     """
     Sendet den Bericht per E-Mail.
     """
     try:
         logger.info("Versuche, den Bericht per E-Mail zu versenden...")
-        sende_email(bericht)
+        smtp_config = config['smtp']
+        sende_email(bericht, smtp_config)
         logger.info("Bericht erfolgreich per E-Mail versendet.")
         return True
     except EmailError as e:
@@ -478,51 +488,51 @@ def sende_bericht(bericht: str, args: argparse.Namespace) -> bool:
         return False
 
 def main() -> None:
-    """Hauptfunktion"""
-    setup_logging()
-    
+    """Hauptfunktion des WeatherBots."""
     try:
+        # Logging einrichten
+        setup_logging()
+        
+        # Argumente parsen
         args = parse_args()
         logger.info(f"Starte WeatherBot im Modus: {args.modus}")
         
-        # Etappe laden
-        try:
-            etappe = lade_heutige_etappe(config)
-            logger.info(f"Etappe geladen: {etappe['name']}")
-        except ValueError as e:
-            logger.error(f"Fehler beim Laden der Etappe: {str(e)}")
-            return
-
+        # Konfiguration laden
+        config = lade_konfiguration()
+        
+        # Heutige Etappe laden
+        etappe = lade_heutige_etappe(config)
+        if not etappe:
+            logger.error("Konnte heutige Etappe nicht laden")
+            sys.exit(1)
+            
         # Wetterdaten laden
-        try:
-            daten = lade_daten(args, etappe, config)
-            wetter = daten["wetter"]
-            logger.info("Wetterdaten erfolgreich geladen")
-        except DataError as e:
-            logger.error(f"Fehler beim Laden der Wetterdaten: {str(e)}")
-            return
-
-        # Wetterbericht generieren
-        bericht, success = generiere_bericht(etappe, wetter, args)
-        if not success:
-            return
-
-        # Ausgabe und ggf. Versand
-        print(bericht)
+        wetter = lade_daten(args, etappe, config)
+        if not wetter:
+            logger.error("Konnte Wetterdaten nicht laden")
+            sys.exit(1)
+            
+        # Bericht generieren
+        bericht, ist_warnung = generiere_bericht(etappe, wetter, args)
+        if not bericht:
+            logger.error("Konnte Bericht nicht generieren")
+            sys.exit(1)
+            
+        # Bericht senden
         if not args.dry_run:
-            try:
-                sende_bericht(bericht, args)
-            except Exception as e:
-                logger.error(f"Fehler beim Versenden des Berichts: {str(e)}")
-                return
-
-    except ConfigError as e:
-        logger.error(f"Konfigurationsfehler: {str(e)}")
-        return
+            if not sende_bericht(bericht, args, config):
+                logger.error("Konnte Bericht nicht senden")
+                sys.exit(1)
+            logger.info("Bericht erfolgreich gesendet")
+        else:
+            logger.info("Dry Run - Bericht wird nicht gesendet")
+            print("\n--- Wetterbericht (Dry Run) ---")
+            print(bericht)
+            
     except Exception as e:
         logger.error(f"Unerwarteter Fehler: {str(e)}")
         logger.error(traceback.format_exc())
-        return
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

@@ -6,8 +6,8 @@ smtp:
   to: henningemmrich@icloud.com
   subject: Wetterwarnung GR20
 schwellen:
-  regen: 50
-  gewitter: 30
+  regen: 20
+  gewitter: 20
   delta_prozent: 20
   hitze: 32
-  wind: 40
+  wind: 20

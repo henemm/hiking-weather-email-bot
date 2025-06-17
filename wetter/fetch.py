@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import requests
-from config import config
+from src.config import config
 
 logger = logging.getLogger(__name__)
 
@@ -178,8 +178,17 @@ def hole_wetterdaten(punkte: List[Dict[str, float]], modus: str = "tag") -> Dict
         raise ValueError("Keine Wetterdaten verfügbar")
     # Aggregiere Werte, ignoriere None und setze Defaults
     if modus == "abend":
-        nacht_temp_values = [d["daily"]["temperature_2m_min"][0] for d in alle_daten if d["daily"]["temperature_2m_min"][0] is not None]
-        nacht_temp = min(nacht_temp_values) if nacht_temp_values else 0
+        # Nachttemperatur: Nur der letzte Punkt der heutigen Etappe (Schlafplatz) zählt!
+        letzter_punkt = alle_daten[-1] if alle_daten else None
+        nacht_temp = None
+        if letzter_punkt and 'daily' in letzter_punkt:
+            daily = letzter_punkt['daily']
+            if 'apparent_temperature_min' in daily and daily['apparent_temperature_min']:
+                nacht_temp = daily['apparent_temperature_min'][0]
+            elif 'temperature_2m_min' in daily and daily['temperature_2m_min']:
+                nacht_temp = daily['temperature_2m_min'][0]
+            else:
+                nacht_temp = None
     else:
         nacht_temp = None
     hitze_values = [d["daily"]["apparent_temperature_max"][0] for d in alle_daten if d["daily"]["apparent_temperature_max"][0] is not None]

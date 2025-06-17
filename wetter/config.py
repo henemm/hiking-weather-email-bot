@@ -24,7 +24,7 @@ def validate_config(config: Dict[str, Any]) -> None:
         ConfigValidationError: Bei ungültiger Konfiguration
     """
     # Pflichtfelder
-    required_fields = ['startdatum', 'smtp', 'schwellenwerte']
+    required_fields = ['startdatum', 'smtp', 'schwellen']
     for field in required_fields:
         if field not in config:
             raise ConfigValidationError(f"Fehlendes Pflichtfeld: {field}")
@@ -38,7 +38,7 @@ def validate_config(config: Dict[str, Any]) -> None:
         raise ConfigValidationError("Ungültiges Startdatum-Format (erwartet: YYYY-MM-DD)")
     
     # Validierung der SMTP-Konfiguration
-    smtp_fields = ['host', 'port', 'user', 'recipient', 'subject']
+    smtp_fields = ['host', 'port', 'user', 'to']
     for field in smtp_fields:
         if field not in config['smtp']:
             raise ConfigValidationError(f"Fehlendes SMTP-Feld: {field}")
@@ -48,17 +48,15 @@ def validate_config(config: Dict[str, Any]) -> None:
         raise ConfigValidationError("Ungültiger SMTP-Port (muss zwischen 1 und 65535 liegen)")
     
     # Validierung der Schwellenwerte
-    schwellenwerte_fields = ['regen', 'gewitter', 'delta_prozent', 'hitze', 'wind']
-    for field in schwellenwerte_fields:
-        if field not in config['schwellenwerte']:
-            raise ConfigValidationError(f"Fehlende Schwellenwerte: {field}")
+    schwellen_fields = ['regen', 'gewitter', 'delta_prozent', 'hitze', 'wind']
+    for field in schwellen_fields:
+        if field not in config['schwellen']:
+            raise ConfigValidationError(f"Fehlender Schwellenwert: {field}")
     
-    # Validierung der Schwellenwerte
-    if not isinstance(config['schwellenwerte']['regen'], (int, float)) or config['schwellenwerte']['regen'] < 0:
-        raise ConfigValidationError("Ungültiger Regen-Schwellenwert (muss >= 0 sein)")
-    
-    if not isinstance(config['schwellenwerte']['gewitter'], (int, float)) or config['schwellenwerte']['gewitter'] < 0:
-        raise ConfigValidationError("Ungültiger Gewitter-Schwellenwert (muss >= 0 sein)")
+    # Validierung der Schwellenwerte-Typen
+    for field in schwellen_fields:
+        if not isinstance(config['schwellen'][field], (int, float)) or config['schwellen'][field] < 0:
+            raise ConfigValidationError(f"Ungültiger Schwellenwert für {field} (muss >= 0 sein)")
 
 def lade_konfiguration(config_path: str) -> Dict[str, Any]:
     """
