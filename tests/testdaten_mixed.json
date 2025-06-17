@@ -1,0 +1,14 @@
+{
+    "wetter": {
+        "nacht_temp": 5.0,
+        "hitze": 30.0,
+        "regen": 60.0,
+        "wind": 45.0,
+        "gewitter": 70.0,
+        "regen_ab": "10:00",
+        "gewitter_ab": "11:00",
+        "regen_max_zeit": "12:00",
+        "gewitter_max_zeit": "13:00",
+        "thunderstorm_plus1": 50.0
+    }
+} 
