@@ -90,6 +90,101 @@ class TestWetterbericht(unittest.TestCase):
         self.assertIn("Regen ab: invalid", bericht)
         self.assertIn("Gewitter ab: invalid", bericht)
 
+    def test_extreme_weather_conditions(self):
+        """Test report generation for extreme weather conditions"""
+        extreme_data = {
+            "nacht_temp": -20.0,  # Extreme cold
+            "hitze": 45.0,        # Extreme heat
+            "regen": 100.0,       # Heavy rain
+            "wind": 100.0,        # Strong wind
+            "gewitter": 100.0,    # High thunderstorm probability
+            "regen_ab": "12:00",
+            "gewitter_ab": "13:00",
+            "regen_max_zeit": "14:00",
+            "gewitter_max_zeit": "15:00"
+        }
+        bericht = generiere_wetterbericht(**extreme_data)
+        self.assertIn("Extreme Kälte", bericht)
+        self.assertIn("Extreme Hitze", bericht)
+        self.assertIn("Starker Regen", bericht)
+        self.assertIn("Starker Wind", bericht)
+        self.assertIn("Gewitter", bericht)
+
+    def test_weather_transitions(self):
+        """Test report generation for weather transitions"""
+        transition_data = {
+            "nacht_temp": 15.0,
+            "hitze": 25.0,
+            "regen": 40.0,
+            "wind": 15.0,
+            "gewitter": 30.0,
+            "regen_ab": "14:00",
+            "gewitter_ab": "15:00",
+            "regen_max_zeit": "16:00",
+            "gewitter_max_zeit": "17:00"
+        }
+        bericht = generiere_wetterbericht(**transition_data)
+        self.assertIn("14:00", bericht)  # Rain start time
+        self.assertIn("15:00", bericht)  # Thunderstorm start time
+        self.assertIn("16:00", bericht)  # Max rain time
+        self.assertIn("17:00", bericht)  # Max thunderstorm time
+
+    def test_report_modes(self):
+        """Test different report modes (evening, morning, day)"""
+        test_data = {
+            "nacht_temp": 15.0,
+            "hitze": 25.0,
+            "regen": 20.0,
+            "wind": 15.0,
+            "gewitter": 5.0
+        }
+        
+        # Evening report
+        abend_bericht = generiere_wetterbericht(**test_data, modus="abend")
+        self.assertIn("Nachttemperatur", abend_bericht)
+        
+        # Morning report
+        morgen_bericht = generiere_wetterbericht(**test_data, modus="morgen")
+        self.assertIn("Tagestemperatur", morgen_bericht)
+        
+        # Day warning
+        tages_bericht = generiere_wetterbericht(**test_data, modus="tag")
+        self.assertIn("Warnung", tages_bericht)
+
+    def test_report_localization(self):
+        """Test report text localization"""
+        test_data = {
+            "nacht_temp": 15.0,
+            "hitze": 25.0,
+            "regen": 20.0,
+            "wind": 15.0,
+            "gewitter": 5.0
+        }
+        
+        # German report
+        de_bericht = generiere_wetterbericht(**test_data, sprache="de")
+        self.assertIn("Temperatur", de_bericht)
+        
+        # English report
+        en_bericht = generiere_wetterbericht(**test_data, sprache="en")
+        self.assertIn("Temperature", en_bericht)
+
+    def test_report_formatting(self):
+        """Test report text formatting"""
+        test_data = {
+            "nacht_temp": 15.0,
+            "hitze": 25.0,
+            "regen": 20.0,
+            "wind": 15.0,
+            "gewitter": 5.0
+        }
+        bericht = generiere_wetterbericht(**test_data)
+        
+        # Check for proper formatting
+        self.assertIn("\n", bericht)  # Should have line breaks
+        self.assertNotIn("  ", bericht)  # No double spaces
+        self.assertTrue(bericht.strip())  # No leading/trailing whitespace
+
 
 if __name__ == "__main__":
     unittest.main()

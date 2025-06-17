@@ -72,9 +72,7 @@ class TestAppOutputs(unittest.TestCase):
         nachricht = generiere_kurznachricht(
             wetterdaten=self.wetterdaten,
             modus="abend",
-            start_date=self.config["startdatum"],
-            etappen_data=self.etappen,
-            config=self.config
+            etappenname=None
         )
         print("\n--- Kurznachricht (Abend) ---\n", nachricht)
         self.assertIn("Temperatur", nachricht)
@@ -88,9 +86,7 @@ class TestAppOutputs(unittest.TestCase):
         nachricht = generiere_kurznachricht(
             wetterdaten=wetterdaten_morgen,
             modus="morgen",
-            start_date=self.config["startdatum"],
-            etappen_data=self.etappen,
-            config=self.config
+            etappenname=None
         )
         print("\n--- Kurznachricht (Morgen) ---\n", nachricht)
         self.assertIn("Temperatur", nachricht)
@@ -99,14 +95,10 @@ class TestAppOutputs(unittest.TestCase):
         self.assertIn("Gewitter", nachricht)
 
     def test_kurznachricht_extremwerte(self):
-        config_extrem = self.config.copy()
-        config_extrem["schwellenwerte"] = {"regen": 0, "gewitter": 0, "wind": 0, "kalt": -10, "heiss": 10}
         nachricht = generiere_kurznachricht(
             wetterdaten=self.wetterdaten,
             modus="abend",
-            start_date=self.config["startdatum"],
-            etappen_data=self.etappen,
-            config=config_extrem
+            etappenname=None
         )
         print("\n--- Kurznachricht (Extremwerte) ---\n", nachricht)
         self.assertIn("Regen", nachricht)

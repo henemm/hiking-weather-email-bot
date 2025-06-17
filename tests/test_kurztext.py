@@ -82,10 +82,7 @@ class TestKurztext(unittest.TestCase):
         """Test Abend-Wetterbericht"""
         nachricht = generiere_kurznachricht(
             self.test_wetterdaten,
-            modus="abend",
-            start_date="2024-03-10",
-            etappen_data=self.test_etappen,
-            config={}
+            modus="abend"
         )
         
         # Überprüfe die Nachricht
@@ -104,15 +101,11 @@ class TestKurztext(unittest.TestCase):
             'nacht_temp': 15.5,
             'nacht_temp_gefuehlt': 14.8
         })
-        
         nachricht = generiere_kurznachricht(
             wetterdaten,
             modus="morgen",
-            start_date="2024-03-10",
-            etappen_data=self.test_etappen,
-            config={}
+            etappenname=None
         )
-        
         # Überprüfe die Nachricht
         self.assertIn("Wetterbericht Morgen", nachricht)
         self.assertIn("15.5°C", nachricht)
@@ -122,7 +115,17 @@ class TestKurztext(unittest.TestCase):
         """Test ungültige Wetterdaten"""
         # Test mit leeren Wetterdaten
         with self.assertRaises(TextGenerationError):
-            generiere_kurznachricht({}, config={})
+            generiere_kurznachricht({})
+
+    def test_format_time_invalid(self):
+        """Test ungültiges Zeitformat"""
+        with self.assertRaises(ValueError):
+            format_zeit("invalid-time")
+            
+    def test_format_time_none(self):
+        """Test None als Zeitwert"""
+        with self.assertRaises(ValueError):
+            format_zeit(None)
 
 if __name__ == '__main__':
     unittest.main() 

@@ -2,28 +2,25 @@ import unittest
 import os
 import tempfile
 import yaml
-from wetter.config import (
-    lade_konfiguration,
-    validate_config,
-    ConfigError,
-    ConfigValidationError
-)
+from wetter.config import validate_config, lade_konfiguration, ConfigValidationError, ConfigError
 
 class TestConfig(unittest.TestCase):
     def setUp(self):
         """Test-Setup mit temporärer Konfigurationsdatei"""
         self.valid_config = {
-            'startdatum': '2024-06-15',
-            'smtp': {
-                'host': 'smtp.example.com',
-                'port': 587,
-                'user': 'test@example.com',
-                'recipient': 'recipient@example.com',
-                'subject': 'Wetterbericht'
+            "startdatum": "2024-03-10",
+            "smtp": {
+                "host": "smtp.gmail.com",
+                "port": 587,
+                "user": "test@example.com",
+                "to": "recipient@example.com"
             },
-            'schwellenwerte': {
-                'regen': 0.1,
-                'gewitter': 0.1
+            "schwellen": {
+                "regen": 50,
+                "gewitter": 30,
+                "wind": 40,
+                "hitze": 35,
+                "delta_prozent": 20
             }
         }
         
@@ -32,18 +29,16 @@ class TestConfig(unittest.TestCase):
         self.config_path = os.path.join(self.temp_dir, 'config.yaml')
         with open(self.config_path, 'w') as f:
             yaml.dump(self.valid_config, f)
-
+    
     def tearDown(self):
-        """Aufräumen nach den Tests"""
-        if os.path.exists(self.config_path):
-            os.remove(self.config_path)
+        """Cleanup nach den Tests"""
+        os.remove(self.config_path)
         os.rmdir(self.temp_dir)
-
+    
     def test_validate_config_valid(self):
         """Test gültige Konfiguration"""
-        # Überprüfe, ob keine Exception geworfen wird
         validate_config(self.valid_config)
-
+    
     def test_validate_config_missing_fields(self):
         """Test fehlende Pflichtfelder"""
         # Test ohne startdatum
@@ -58,12 +53,12 @@ class TestConfig(unittest.TestCase):
         with self.assertRaises(ConfigValidationError):
             validate_config(invalid_config)
         
-        # Test ohne schwellenwerte
+        # Test ohne schwellen
         invalid_config = self.valid_config.copy()
-        del invalid_config['schwellenwerte']
+        del invalid_config['schwellen']
         with self.assertRaises(ConfigValidationError):
             validate_config(invalid_config)
-
+    
     def test_validate_config_invalid_types(self):
         """Test ungültige Datentypen"""
         # Test ungültiges startdatum
@@ -77,7 +72,7 @@ class TestConfig(unittest.TestCase):
         invalid_config['smtp']['port'] = 'invalid'
         with self.assertRaises(ConfigValidationError):
             validate_config(invalid_config)
-
+    
     def test_validate_config_invalid_values(self):
         """Test ungültige Werte"""
         # Test ungültiges Datum
@@ -92,31 +87,29 @@ class TestConfig(unittest.TestCase):
         with self.assertRaises(ConfigValidationError):
             validate_config(invalid_config)
         
-        # Test negative Schwellenwerte
+        # Test ungültiger Schwellenwert
         invalid_config = self.valid_config.copy()
-        invalid_config['schwellenwerte']['regen'] = -1
+        invalid_config['schwellen']['regen'] = -1
         with self.assertRaises(ConfigValidationError):
             validate_config(invalid_config)
-
+    
     def test_lade_konfiguration_success(self):
         """Test erfolgreiches Laden der Konfiguration"""
         config = lade_konfiguration(self.config_path)
-        self.assertEqual(config['startdatum'], '2024-06-15')
-        self.assertEqual(config['smtp']['host'], 'smtp.example.com')
+        self.assertEqual(config['startdatum'], '2024-03-10')
+        self.assertEqual(config['smtp']['host'], 'smtp.gmail.com')
         self.assertEqual(config['smtp']['port'], 587)
-        self.assertEqual(config['schwellenwerte']['regen'], 0.1)
-
+        self.assertEqual(config['schwellen']['regen'], 50)
+    
     def test_lade_konfiguration_file_not_found(self):
         """Test nicht existierende Konfigurationsdatei"""
         with self.assertRaises(ConfigError):
-            lade_konfiguration('nonexistent.yaml')
-
+            lade_konfiguration('nicht_existierende_datei.yaml')
+    
     def test_lade_konfiguration_invalid_yaml(self):
         """Test ungültiges YAML-Format"""
-        # Schreibe ungültiges YAML
         with open(self.config_path, 'w') as f:
             f.write('invalid: yaml: content:')
-        
         with self.assertRaises(ConfigError):
             lade_konfiguration(self.config_path)
 
