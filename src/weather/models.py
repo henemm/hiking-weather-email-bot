@@ -92,4 +92,17 @@ class WeatherReport:
     rain_time_threshold: Optional[str] = None
     rain_time_max: Optional[str] = None
     thunder_time_threshold: Optional[str] = None
-    thunder_time_max: Optional[str] = None 
+    thunder_time_max: Optional[str] = None
+    # Neue Felder für Schwellen- und Maximalwerte
+    rain_prob_threshold: Optional[float] = None
+    rain_prob_time_threshold: Optional[str] = None
+    rain_amt_threshold: Optional[float] = None
+    rain_amt_time_threshold: Optional[str] = None
+    rain_prob_max: Optional[float] = None
+    rain_prob_time_max: Optional[str] = None
+    rain_amt_max: Optional[float] = None
+    rain_amt_time_max: Optional[str] = None
+    thunder_prob_threshold: Optional[float] = None
+    thunder_prob_time_threshold: Optional[str] = None
+    thunder_prob_max: Optional[float] = None
+    thunder_prob_time_max: Optional[str] = None 

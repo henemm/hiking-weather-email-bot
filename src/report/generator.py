@@ -92,78 +92,222 @@ class ReportGenerator:
         nacht = self._format_night_temp(report.night_temperature)
         return f"{etappe} | {gewitter} | {regen} | {wind} | {hitze} | {nacht}"
     
-    def generate_evening_inreach(self, report: WeatherReport, rain_prob_threshold, rain_time_threshold, rain_amt_threshold, rain_prob_max, rain_time_max, rain_amt_max, thunder_prob_threshold, thunder_time_threshold, thunder_prob_max, thunder_time_max):
+    def generate_evening_inreach(self, report: WeatherReport, rain_prob_threshold, rain_prob_time_threshold, rain_amt_threshold, rain_amt_time_threshold, rain_prob_max, rain_prob_time_max, rain_amt_max, rain_amt_time_max, thunder_prob_threshold, thunder_prob_time_threshold, thunder_prob_max, thunder_prob_time_max):
         etappe = report.stage_name
         def fmt(val, unit=None):
             if val is None or (isinstance(val, (float, int)) and val == 0):
                 return "-"
             return f"{val}{unit}" if unit else str(val)
+        def fmt_time_short(timestr):
+            """Format time as HH only for InReach format"""
+            if not timestr:
+                return None
+            try:
+                # Try to parse as ISO format first
+                return datetime.fromisoformat(timestr).strftime("%H")
+            except Exception:
+                # If that fails, try to extract hours from HH:MM format
+                if ':' in timestr:
+                    return timestr.split(':')[0]
+                # If no colon, try to get first two characters
+                return timestr[:2] if len(timestr) >= 2 else timestr
         def fmt_val_time(val, time, unit=None):
             v = fmt(val, unit)
             if v == "-":
                 return "-"
             if not time:
                 return v
-            return f"{v}@{time}"
+            t = fmt_time_short(time)
+            if t is None:
+                return v
+            return f"{v}@{t}"
+        def fmt_risk_with_time(threshold_val, threshold_time, max_val, max_time, unit=None):
+            """Format risk value, showing only one value if threshold equals maximum"""
+            if threshold_val is None and max_val is None:
+                return "-"
+            if threshold_val == max_val and threshold_time == max_time:
+                # Same value and time - show only once
+                return fmt_val_time(threshold_val, threshold_time, unit)
+            else:
+                # Different values or times - show both
+                threshold_str = fmt_val_time(threshold_val, threshold_time, unit)
+                max_str = fmt_val_time(max_val, max_time, unit)
+                if threshold_str == "-" and max_str != "-":
+                    return max_str
+                elif threshold_str != "-" and max_str == "-":
+                    return threshold_str
+                elif threshold_str == "-" and max_str == "-":
+                    return "-"
+                else:
+                    return f"{threshold_str} ({max_str})"
+        
         # Gewitter
-        if thunder_prob_threshold is None and thunder_prob_max is None:
-            gewitter = "-"
-        else:
-            gewitter = f"{fmt_val_time(thunder_prob_threshold, thunder_time_threshold, '%')} ({fmt_val_time(thunder_prob_max, thunder_time_max, '%')})"
-        # Regen
-        if (rain_prob_threshold is None and rain_amt_threshold is None and rain_prob_max is None and rain_amt_max is None):
+        gewitter = fmt_risk_with_time(thunder_prob_threshold, thunder_prob_time_threshold, thunder_prob_max, thunder_prob_time_max, '%')
+        
+        # Regen - combine probability and amount
+        rain_prob_str = fmt_risk_with_time(rain_prob_threshold, rain_prob_time_threshold, rain_prob_max, rain_prob_time_max, '%')
+        rain_amt_str = fmt_risk_with_time(rain_amt_threshold, rain_amt_time_threshold, rain_amt_max, rain_amt_time_max, 'mm')
+        
+        if rain_prob_str == "-" and rain_amt_str == "-":
             regen = "-"
+        elif rain_prob_str == "-":
+            regen = rain_amt_str
+        elif rain_amt_str == "-":
+            regen = rain_prob_str
         else:
-            regen = f"{fmt_val_time(rain_prob_threshold, rain_time_threshold, '%')} {fmt_val_time(rain_amt_threshold, rain_time_threshold, 'mm')} ({fmt_val_time(rain_prob_max, rain_time_max, '%')} {fmt_val_time(rain_amt_max, rain_time_max, 'mm')})"
+            regen = f"{rain_prob_str} {rain_amt_str}"
+        
         wind = fmt(report.max_wind_speed, "km/h")
         hitze = fmt(report.max_feels_like, "°C")
         nacht = fmt(report.night_temperature, "°C")
         return f"{etappe} | Gewitter {gewitter} | Regen {regen} | Wind {wind} | Hitze {hitze} | Nacht {nacht}"
     
-    def generate_evening_email_html(self, report: WeatherReport, rain_prob_threshold: Optional[float], rain_prob_time_threshold: Optional[str], rain_amt_threshold: Optional[float], rain_prob_max: Optional[float], rain_prob_time_max: Optional[str], rain_amt_max: Optional[float], thunder_prob_threshold: Optional[float], thunder_time_threshold: Optional[str], thunder_prob_max: Optional[float], thunder_time_max: Optional[str]) -> str:
+    def generate_evening_email_html(self, report: WeatherReport, rain_prob_threshold: Optional[float], rain_prob_time_threshold: Optional[str], rain_amt_threshold: Optional[float], rain_amt_time_threshold: Optional[str], rain_prob_max: Optional[float], rain_prob_time_max: Optional[str], rain_amt_max: Optional[float], rain_amt_time_max: Optional[str], thunder_prob_threshold: Optional[float], thunder_time_threshold: Optional[str], thunder_prob_max: Optional[float], thunder_time_max: Optional[str]) -> str:
         return report.text
 
-    def generate_evening_email_plaintext(self, report: WeatherReport, rain_prob_threshold: Optional[float], rain_prob_time_threshold: Optional[str], rain_amt_threshold: Optional[float], rain_prob_max: Optional[float], rain_prob_time_max: Optional[str], rain_amt_max: Optional[float], thunder_prob_threshold: Optional[float], thunder_time_threshold: Optional[str], thunder_prob_max: Optional[float], thunder_time_max: Optional[str]) -> str:
+    def generate_evening_email_plaintext(self, report: WeatherReport, rain_prob_threshold: Optional[float], rain_prob_time_threshold: Optional[str], rain_amt_threshold: Optional[float], rain_amt_time_threshold: Optional[str], rain_prob_max: Optional[float], rain_prob_time_max: Optional[str], rain_amt_max: Optional[float], rain_amt_time_max: Optional[str], thunder_prob_threshold: Optional[float], thunder_time_threshold: Optional[str], thunder_prob_max: Optional[float], thunder_time_max: Optional[str]) -> str:
         return report.text
     
     def generate_morning_report(self, report: WeatherReport) -> str:
-        """Generiert einen Morgenbericht mit Zeitpunkten und richtiger Reihenfolge"""
-        etappe = report.stage_name
-        gewitter = self._format_thunder(report.max_thunderstorm_probability, report.thunder_time_threshold, report.thunder_time_max)
-        regen = self._format_rain(report.max_precipitation, report.rain_time_threshold, report.rain_time_max)
-        wind = self._format_wind(report.max_wind_speed)
-        hitze = self._format_heat(report.max_feels_like)
-        return f"{etappe} | {gewitter} | {regen} | {wind} | {hitze}"
+        def fmt(val, unit=None):
+            if val is None or (isinstance(val, (float, int)) and val == 0):
+                return "-"
+            return f"{val}{unit}" if unit else str(val)
+        def fmt_time(timestr):
+            if not timestr:
+                return None
+            try:
+                return datetime.fromisoformat(timestr).strftime("%H:%M")
+            except Exception:
+                return timestr[-5:] if len(timestr) >= 5 else timestr
+        def fmt_val_time(val, time, unit=None):
+            v = fmt(val, unit)
+            t = fmt_time(time)
+            if v == "-":
+                return "-"
+            if t is None:
+                return v
+            return f"{v}@{t}"
+        def fmt_risk_with_time(threshold_val, threshold_time, max_val, max_time, unit=None):
+            """Format risk value, showing only one value if threshold equals maximum"""
+            if threshold_val is None and max_val is None:
+                return "-"
+            if threshold_val == max_val and threshold_time == max_time:
+                # Same value and time - show only once
+                return fmt_val_time(threshold_val, threshold_time, unit)
+            else:
+                # Different values or times - show both
+                threshold_str = fmt_val_time(threshold_val, threshold_time, unit)
+                max_str = fmt_val_time(max_val, max_time, unit)
+                if threshold_str == "-" and max_str != "-":
+                    return max_str
+                elif threshold_str != "-" and max_str == "-":
+                    return threshold_str
+                elif threshold_str == "-" and max_str == "-":
+                    return "-"
+                else:
+                    return f"{threshold_str} ({max_str})"
+        
+        # Regenwahrscheinlichkeit
+        regen_prob = fmt_risk_with_time(report.rain_prob_threshold, report.rain_prob_time_threshold, report.rain_prob_max, report.rain_prob_time_max, "%")
+        # Niederschlagsmenge
+        regen_amt = fmt_risk_with_time(report.rain_amt_threshold, report.rain_amt_time_threshold, report.rain_amt_max, report.rain_amt_time_max, "mm")
+        # Gewitterwahrscheinlichkeit
+        gew = fmt_risk_with_time(report.thunder_prob_threshold, report.thunder_prob_time_threshold, report.thunder_prob_max, report.thunder_prob_time_max, "%")
+        # Wind
+        wind = fmt(report.max_wind_speed, "km/h")
+        # Hitze
+        hitze = fmt(report.max_feels_like, "°C")
+        # Übermorgen Gewitter
+        gew_plus1 = fmt(report.next_day_thunderstorm, "%")
+        lines = [
+            f"Wetterbericht für {report.stage_name} am {report.date.strftime('%d.%m.%Y')}",
+            "",
+            "Risiken für heute:",
+            f"  Regenwahrscheinlichkeit: {regen_prob}",
+            f"  Niederschlagsmenge: {regen_amt}",
+            f"  Gewitterwahrscheinlichkeit: {gew}",
+            f"  Wind: {wind}",
+            f"  Hitze: {hitze}",
+            "",
+            "Gewitterwahrscheinlichkeit für morgen:",
+            f"  {gew_plus1}"
+        ]
+        return "\n".join(lines)
     
-    def generate_morning_inreach(self, report: WeatherReport, rain_prob_threshold, rain_time_threshold, rain_amt_threshold, rain_prob_max, rain_time_max, rain_amt_max, thunder_prob_threshold, thunder_time_threshold, thunder_prob_max, thunder_time_max):
+    def generate_morning_inreach(self, report: WeatherReport, rain_prob_threshold, rain_prob_time_threshold, rain_amt_threshold, rain_amt_time_threshold, rain_prob_max, rain_prob_time_max, rain_amt_max, rain_amt_time_max, thunder_prob_threshold, thunder_prob_time_threshold, thunder_prob_max, thunder_prob_time_max):
         etappe = report.stage_name
         def fmt(val, unit=None):
             if val is None or (isinstance(val, (float, int)) and val == 0):
                 return "-"
             return f"{val}{unit}" if unit else str(val)
+        def fmt_time_short(timestr):
+            """Format time as HH only for InReach format"""
+            if not timestr:
+                return None
+            try:
+                # Try to parse as ISO format first
+                return datetime.fromisoformat(timestr).strftime("%H")
+            except Exception:
+                # If that fails, try to extract hours from HH:MM format
+                if ':' in timestr:
+                    return timestr.split(':')[0]
+                # If no colon, try to get first two characters
+                return timestr[:2] if len(timestr) >= 2 else timestr
         def fmt_val_time(val, time, unit=None):
             v = fmt(val, unit)
             if v == "-":
                 return "-"
             if not time:
                 return v
-            return f"{v}@{time}"
-        if thunder_prob_threshold is None and thunder_prob_max is None:
-            gewitter = "-"
-        else:
-            gewitter = f"{fmt_val_time(thunder_prob_threshold, thunder_time_threshold, '%')} ({fmt_val_time(thunder_prob_max, thunder_time_max, '%')})"
-        if (rain_prob_threshold is None and rain_amt_threshold is None and rain_prob_max is None and rain_amt_max is None):
+            t = fmt_time_short(time)
+            if t is None:
+                return v
+            return f"{v}@{t}"
+        def fmt_risk_with_time(threshold_val, threshold_time, max_val, max_time, unit=None):
+            """Format risk value, showing only one value if threshold equals maximum"""
+            if threshold_val is None and max_val is None:
+                return "-"
+            if threshold_val == max_val and threshold_time == max_time:
+                # Same value and time - show only once
+                return fmt_val_time(threshold_val, threshold_time, unit)
+            else:
+                # Different values or times - show both
+                threshold_str = fmt_val_time(threshold_val, threshold_time, unit)
+                max_str = fmt_val_time(max_val, max_time, unit)
+                if threshold_str == "-" and max_str != "-":
+                    return max_str
+                elif threshold_str != "-" and max_str == "-":
+                    return threshold_str
+                elif threshold_str == "-" and max_str == "-":
+                    return "-"
+                else:
+                    return f"{threshold_str} ({max_str})"
+        
+        # Gewitter
+        gewitter = fmt_risk_with_time(thunder_prob_threshold, thunder_prob_time_threshold, thunder_prob_max, thunder_prob_time_max, '%')
+        
+        # Regen - combine probability and amount
+        rain_prob_str = fmt_risk_with_time(rain_prob_threshold, rain_prob_time_threshold, rain_prob_max, rain_prob_time_max, '%')
+        rain_amt_str = fmt_risk_with_time(rain_amt_threshold, rain_amt_time_threshold, rain_amt_max, rain_amt_time_max, 'mm')
+        
+        if rain_prob_str == "-" and rain_amt_str == "-":
             regen = "-"
+        elif rain_prob_str == "-":
+            regen = rain_amt_str
+        elif rain_amt_str == "-":
+            regen = rain_prob_str
         else:
-            regen = f"{fmt_val_time(rain_prob_threshold, rain_time_threshold, '%')} {fmt_val_time(rain_amt_threshold, rain_time_threshold, 'mm')} ({fmt_val_time(rain_prob_max, rain_time_max, '%')} {fmt_val_time(rain_amt_max, rain_time_max, 'mm')})"
+            regen = f"{rain_prob_str} {rain_amt_str}"
+        
         wind = fmt(report.max_wind_speed, "km/h")
         hitze = fmt(report.max_feels_like, "°C")
         return f"{etappe} | Gewitter {gewitter} | Regen {regen} | Wind {wind} | Hitze {hitze}"
     
-    def generate_morning_email_html(self, report: WeatherReport, rain_prob_threshold: Optional[float], rain_prob_time_threshold: Optional[str], rain_amt_threshold: Optional[float], rain_prob_max: Optional[float], rain_prob_time_max: Optional[str], rain_amt_max: Optional[float], thunder_prob_threshold: Optional[float], thunder_time_threshold: Optional[str], thunder_prob_max: Optional[float], thunder_time_max: Optional[str]) -> str:
+    def generate_morning_email_html(self, report: WeatherReport, rain_prob_threshold: Optional[float], rain_prob_time_threshold: Optional[str], rain_amt_threshold: Optional[float], rain_amt_time_threshold: Optional[str], rain_prob_max: Optional[float], rain_prob_time_max: Optional[str], rain_amt_max: Optional[float], rain_amt_time_max: Optional[str], thunder_prob_threshold: Optional[float], thunder_time_threshold: Optional[str], thunder_prob_max: Optional[float], thunder_time_max: Optional[str]) -> str:
         return report.text
 
-    def generate_morning_email_plaintext(self, report: WeatherReport, rain_prob_threshold: Optional[float], rain_prob_time_threshold: Optional[str], rain_amt_threshold: Optional[float], rain_prob_max: Optional[float], rain_prob_time_max: Optional[str], rain_amt_max: Optional[float], thunder_prob_threshold: Optional[float], thunder_time_threshold: Optional[str], thunder_prob_max: Optional[float], thunder_time_max: Optional[str]) -> str:
+    def generate_morning_email_plaintext(self, report: WeatherReport, rain_prob_threshold: Optional[float], rain_prob_time_threshold: Optional[str], rain_amt_threshold: Optional[float], rain_amt_time_threshold: Optional[str], rain_prob_max: Optional[float], rain_prob_time_max: Optional[str], rain_amt_max: Optional[float], rain_amt_time_max: Optional[str], thunder_prob_threshold: Optional[float], thunder_time_threshold: Optional[str], thunder_prob_max: Optional[float], thunder_time_max: Optional[str]) -> str:
         return report.text
     
     def generate_day_warning(self, report: WeatherReport) -> str:
@@ -175,35 +319,79 @@ class ReportGenerator:
         hitze = self._format_heat(report.max_feels_like)
         return f"{etappe} | {gewitter} | {regen} | {wind} | {hitze}"
     
-    def generate_day_inreach(self, report: WeatherReport, rain_prob_threshold, rain_time_threshold, rain_amt_threshold, rain_prob_max, rain_time_max, rain_amt_max, thunder_prob_threshold, thunder_time_threshold, thunder_prob_max, thunder_time_max):
+    def generate_day_inreach(self, report: WeatherReport, rain_prob_threshold, rain_prob_time_threshold, rain_amt_threshold, rain_amt_time_threshold, rain_prob_max, rain_prob_time_max, rain_amt_max, rain_amt_time_max, thunder_prob_threshold, thunder_prob_time_threshold, thunder_prob_max, thunder_prob_time_max):
         etappe = report.stage_name
         def fmt(val, unit=None):
             if val is None or (isinstance(val, (float, int)) and val == 0):
                 return "-"
             return f"{val}{unit}" if unit else str(val)
+        def fmt_time_short(timestr):
+            """Format time as HH only for InReach format"""
+            if not timestr:
+                return None
+            try:
+                # Try to parse as ISO format first
+                return datetime.fromisoformat(timestr).strftime("%H")
+            except Exception:
+                # If that fails, try to extract hours from HH:MM format
+                if ':' in timestr:
+                    return timestr.split(':')[0]
+                # If no colon, try to get first two characters
+                return timestr[:2] if len(timestr) >= 2 else timestr
         def fmt_val_time(val, time, unit=None):
             v = fmt(val, unit)
             if v == "-":
                 return "-"
             if not time:
                 return v
-            return f"{v}@{time}"
-        if thunder_prob_threshold is None and thunder_prob_max is None:
-            gewitter = "-"
-        else:
-            gewitter = f"{fmt_val_time(thunder_prob_threshold, thunder_time_threshold, '%')} ({fmt_val_time(thunder_prob_max, thunder_time_max, '%')})"
-        if (rain_prob_threshold is None and rain_amt_threshold is None and rain_prob_max is None and rain_amt_max is None):
+            t = fmt_time_short(time)
+            if t is None:
+                return v
+            return f"{v}@{t}"
+        def fmt_risk_with_time(threshold_val, threshold_time, max_val, max_time, unit=None):
+            """Format risk value, showing only one value if threshold equals maximum"""
+            if threshold_val is None and max_val is None:
+                return "-"
+            if threshold_val == max_val and threshold_time == max_time:
+                # Same value and time - show only once
+                return fmt_val_time(threshold_val, threshold_time, unit)
+            else:
+                # Different values or times - show both
+                threshold_str = fmt_val_time(threshold_val, threshold_time, unit)
+                max_str = fmt_val_time(max_val, max_time, unit)
+                if threshold_str == "-" and max_str != "-":
+                    return max_str
+                elif threshold_str != "-" and max_str == "-":
+                    return threshold_str
+                elif threshold_str == "-" and max_str == "-":
+                    return "-"
+                else:
+                    return f"{threshold_str} ({max_str})"
+        
+        # Gewitter
+        gewitter = fmt_risk_with_time(thunder_prob_threshold, thunder_prob_time_threshold, thunder_prob_max, thunder_prob_time_max, '%')
+        
+        # Regen - combine probability and amount
+        rain_prob_str = fmt_risk_with_time(rain_prob_threshold, rain_prob_time_threshold, rain_prob_max, rain_prob_time_max, '%')
+        rain_amt_str = fmt_risk_with_time(rain_amt_threshold, rain_amt_time_threshold, rain_amt_max, rain_amt_time_max, 'mm')
+        
+        if rain_prob_str == "-" and rain_amt_str == "-":
             regen = "-"
+        elif rain_prob_str == "-":
+            regen = rain_amt_str
+        elif rain_amt_str == "-":
+            regen = rain_prob_str
         else:
-            regen = f"{fmt_val_time(rain_prob_threshold, rain_time_threshold, '%')} {fmt_val_time(rain_amt_threshold, rain_time_threshold, 'mm')} ({fmt_val_time(rain_prob_max, rain_time_max, '%')} {fmt_val_time(rain_amt_max, rain_time_max, 'mm')})"
+            regen = f"{rain_prob_str} {rain_amt_str}"
+        
         wind = fmt(report.max_wind_speed, "km/h")
         hitze = fmt(report.max_feels_like, "°C")
         return f"{etappe} | Gewitter {gewitter} | Regen {regen} | Wind {wind} | Hitze {hitze}"
     
-    def generate_day_email_html(self, report: WeatherReport, rain_prob_threshold: Optional[float], rain_prob_time_threshold: Optional[str], rain_amt_threshold: Optional[float], rain_prob_max: Optional[float], rain_prob_time_max: Optional[str], rain_amt_max: Optional[float], thunder_prob_threshold: Optional[float], thunder_time_threshold: Optional[str], thunder_prob_max: Optional[float], thunder_time_max: Optional[str]) -> str:
+    def generate_day_email_html(self, report: WeatherReport, rain_prob_threshold: Optional[float], rain_prob_time_threshold: Optional[str], rain_amt_threshold: Optional[float], rain_amt_time_threshold: Optional[str], rain_prob_max: Optional[float], rain_prob_time_max: Optional[str], rain_amt_max: Optional[float], rain_amt_time_max: Optional[str], thunder_prob_threshold: Optional[float], thunder_time_threshold: Optional[str], thunder_prob_max: Optional[float], thunder_time_max: Optional[str]) -> str:
         return report.text
 
-    def generate_day_email_plaintext(self, report: WeatherReport, rain_prob_threshold: Optional[float], rain_prob_time_threshold: Optional[str], rain_amt_threshold: Optional[float], rain_prob_max: Optional[float], rain_prob_time_max: Optional[str], rain_amt_max: Optional[float], thunder_prob_threshold: Optional[float], thunder_time_threshold: Optional[str], thunder_prob_max: Optional[float], thunder_time_max: Optional[str]) -> str:
+    def generate_day_email_plaintext(self, report: WeatherReport, rain_prob_threshold: Optional[float], rain_prob_time_threshold: Optional[str], rain_amt_threshold: Optional[float], rain_amt_time_threshold: Optional[str], rain_prob_max: Optional[float], rain_prob_time_max: Optional[str], rain_amt_max: Optional[float], rain_amt_time_max: Optional[str], thunder_prob_threshold: Optional[float], thunder_time_threshold: Optional[str], thunder_prob_max: Optional[float], thunder_time_max: Optional[str]) -> str:
         return report.text
     
     def generate_evening_report_long(self, report: WeatherReport) -> str:
@@ -226,15 +414,32 @@ class ReportGenerator:
             if t is None:
                 return v
             return f"{v}@{t}"
+        def fmt_risk_with_time(threshold_val, threshold_time, max_val, max_time, unit=None):
+            """Format risk value, showing only one value if threshold equals maximum"""
+            if threshold_val is None and max_val is None:
+                return "-"
+            if threshold_val == max_val and threshold_time == max_time:
+                # Same value and time - show only once
+                return fmt_val_time(threshold_val, threshold_time, unit)
+            else:
+                # Different values or times - show both
+                threshold_str = fmt_val_time(threshold_val, threshold_time, unit)
+                max_str = fmt_val_time(max_val, max_time, unit)
+                if threshold_str == "-" and max_str != "-":
+                    return max_str
+                elif threshold_str != "-" and max_str == "-":
+                    return threshold_str
+                elif threshold_str == "-" and max_str == "-":
+                    return "-"
+                else:
+                    return f"{threshold_str} ({max_str})"
+        
         # Regenwahrscheinlichkeit
-        regen_prob_thr = fmt_val_time(report.max_precipitation_probability, report.rain_time_threshold, "%")
-        regen_prob_max = fmt_val_time(report.max_precipitation_probability, report.rain_time_max, "%")
+        regen_prob = fmt_risk_with_time(report.rain_prob_threshold, report.rain_prob_time_threshold, report.rain_prob_max, report.rain_prob_time_max, "%")
         # Niederschlagsmenge
-        regen_amt_thr = fmt_val_time(report.max_precipitation, report.rain_time_threshold, "mm")
-        regen_amt_max = fmt_val_time(report.max_precipitation, report.rain_time_max, "mm")
+        regen_amt = fmt_risk_with_time(report.rain_amt_threshold, report.rain_amt_time_threshold, report.rain_amt_max, report.rain_amt_time_max, "mm")
         # Gewitterwahrscheinlichkeit
-        gew_thr = fmt_val_time(report.max_thunderstorm_probability, report.thunder_time_threshold, "%")
-        gew_max = fmt_val_time(report.max_thunderstorm_probability, report.thunder_time_max, "%")
+        gew = fmt_risk_with_time(report.thunder_prob_threshold, report.thunder_prob_time_threshold, report.thunder_prob_max, report.thunder_prob_time_max, "%")
         # Wind
         wind = fmt(report.max_wind_speed, "km/h")
         # Hitze
@@ -250,9 +455,9 @@ class ReportGenerator:
             f"  {nacht}",
             "",
             "Risiken für morgen:",
-            f"  Regenwahrscheinlichkeit: {regen_prob_thr} ({regen_prob_max})",
-            f"  Niederschlagsmenge: {regen_amt_thr} ({regen_amt_max})",
-            f"  Gewitterwahrscheinlichkeit: {gew_thr} ({gew_max})",
+            f"  Regenwahrscheinlichkeit: {regen_prob}",
+            f"  Niederschlagsmenge: {regen_amt}",
+            f"  Gewitterwahrscheinlichkeit: {gew}",
             f"  Wind: {wind}",
             f"  Hitze: {hitze}",
             "",
@@ -315,23 +520,26 @@ class ReportGenerator:
 
     def generate_inreach(self, report: WeatherReport) -> str:
         """Generiert die Kurztext-/InReach-Variante je nach Modus."""
-        # Extrahiere Schwellen- und Maximalwerte aus dem Report (wie in __main__-Testcode)
+        # Extrahiere Schwellen- und Maximalwerte aus dem Report
         rain_prob_threshold = getattr(report, 'rain_prob_threshold', None)
-        rain_time_threshold = getattr(report, 'rain_prob_time_threshold', None)
+        rain_prob_time_threshold = getattr(report, 'rain_prob_time_threshold', None)
         rain_amt_threshold = getattr(report, 'rain_amt_threshold', None)
+        rain_amt_time_threshold = getattr(report, 'rain_amt_time_threshold', None)
         rain_prob_max = getattr(report, 'rain_prob_max', None)
-        rain_time_max = getattr(report, 'rain_prob_time_max', None)
+        rain_prob_time_max = getattr(report, 'rain_prob_time_max', None)
         rain_amt_max = getattr(report, 'rain_amt_max', None)
+        rain_amt_time_max = getattr(report, 'rain_amt_time_max', None)
         thunder_prob_threshold = getattr(report, 'thunder_prob_threshold', None)
-        thunder_time_threshold = getattr(report, 'thunder_time_threshold', None)
+        thunder_prob_time_threshold = getattr(report, 'thunder_prob_time_threshold', None)
         thunder_prob_max = getattr(report, 'thunder_prob_max', None)
-        thunder_time_max = getattr(report, 'thunder_time_max', None)
+        thunder_prob_time_max = getattr(report, 'thunder_prob_time_max', None)
+        
         if report.mode.name == "EVENING":
-            return self.generate_evening_inreach(report, rain_prob_threshold, rain_time_threshold, rain_amt_threshold, rain_prob_max, rain_time_max, rain_amt_max, thunder_prob_threshold, thunder_time_threshold, thunder_prob_max, thunder_time_max)
+            return self.generate_evening_inreach(report, rain_prob_threshold, rain_prob_time_threshold, rain_amt_threshold, rain_amt_time_threshold, rain_prob_max, rain_prob_time_max, rain_amt_max, rain_amt_time_max, thunder_prob_threshold, thunder_prob_time_threshold, thunder_prob_max, thunder_prob_time_max)
         elif report.mode.name == "MORNING":
-            return self.generate_morning_inreach(report, rain_prob_threshold, rain_time_threshold, rain_amt_threshold, rain_prob_max, rain_time_max, rain_amt_max, thunder_prob_threshold, thunder_time_threshold, thunder_prob_max, thunder_time_max)
+            return self.generate_morning_inreach(report, rain_prob_threshold, rain_prob_time_threshold, rain_amt_threshold, rain_amt_time_threshold, rain_prob_max, rain_prob_time_max, rain_amt_max, rain_amt_time_max, thunder_prob_threshold, thunder_prob_time_threshold, thunder_prob_max, thunder_prob_time_max)
         elif report.mode.name == "DAY":
-            return self.generate_day_inreach(report, rain_prob_threshold, rain_time_threshold, rain_amt_threshold, rain_prob_max, rain_time_max, rain_amt_max, thunder_prob_threshold, thunder_time_threshold, thunder_prob_max, thunder_time_max)
+            return self.generate_day_inreach(report, rain_prob_threshold, rain_prob_time_threshold, rain_amt_threshold, rain_amt_time_threshold, rain_prob_max, rain_prob_time_max, rain_amt_max, rain_amt_time_max, thunder_prob_threshold, thunder_prob_time_threshold, thunder_prob_max, thunder_prob_time_max)
         else:
             return "-"
 
@@ -596,24 +804,30 @@ if __name__ == "__main__":
     print(rg.generate_evening_inreach(
         rep,
         extracted['rain_prob_threshold'], extracted['rain_prob_time_threshold'],
-        extracted['rain_amt_threshold'], extracted['rain_prob_max'], extracted['rain_prob_time_max'],
-        extracted['rain_amt_max'], extracted['thunder_prob_threshold'], extracted['thunder_time_threshold'],
+        extracted['rain_amt_threshold'], extracted['rain_amt_time_threshold'],
+        extracted['rain_prob_max'], extracted['rain_prob_time_max'],
+        extracted['rain_amt_max'], extracted['rain_amt_time_threshold'],
+        extracted['thunder_prob_threshold'], extracted['thunder_time_threshold'],
         extracted['thunder_prob_max'], extracted['thunder_time_max']
     ))
     print('\n--- EMAIL HTML ABEND ---')
     print(rg.generate_evening_email_html(
         rep,
         extracted['rain_prob_threshold'], extracted['rain_prob_time_threshold'],
-        extracted['rain_amt_threshold'], extracted['rain_prob_max'], extracted['rain_prob_time_max'],
-        extracted['rain_amt_max'], extracted['thunder_prob_threshold'], extracted['thunder_time_threshold'],
+        extracted['rain_amt_threshold'], extracted['rain_amt_time_threshold'],
+        extracted['rain_prob_max'], extracted['rain_prob_time_max'],
+        extracted['rain_amt_max'], extracted['rain_amt_time_threshold'],
+        extracted['thunder_prob_threshold'], extracted['thunder_time_threshold'],
         extracted['thunder_prob_max'], extracted['thunder_time_max']
     ))
     print('\n--- EMAIL PLAINTEXT ABEND ---')
     print(rg.generate_evening_email_plaintext(
         rep,
         extracted['rain_prob_threshold'], extracted['rain_prob_time_threshold'],
-        extracted['rain_amt_threshold'], extracted['rain_prob_max'], extracted['rain_prob_time_max'],
-        extracted['rain_amt_max'], extracted['thunder_prob_threshold'], extracted['thunder_time_threshold'],
+        extracted['rain_amt_threshold'], extracted['rain_amt_time_threshold'],
+        extracted['rain_prob_max'], extracted['rain_prob_time_max'],
+        extracted['rain_amt_max'], extracted['rain_amt_time_threshold'],
+        extracted['thunder_prob_threshold'], extracted['thunder_time_threshold'],
         extracted['thunder_prob_max'], extracted['thunder_time_max']
     ))
     rep = generate_report(ReportMode.MORNING, stage, date, wd, next_day_thunderstorm=30)
@@ -621,24 +835,30 @@ if __name__ == "__main__":
     print(rg.generate_morning_inreach(
         rep,
         extracted['rain_prob_threshold'], extracted['rain_prob_time_threshold'],
-        extracted['rain_amt_threshold'], extracted['rain_prob_max'], extracted['rain_prob_time_max'],
-        extracted['rain_amt_max'], extracted['thunder_prob_threshold'], extracted['thunder_time_threshold'],
+        extracted['rain_amt_threshold'], extracted['rain_amt_time_threshold'],
+        extracted['rain_prob_max'], extracted['rain_prob_time_max'],
+        extracted['rain_amt_max'], extracted['rain_amt_time_threshold'],
+        extracted['thunder_prob_threshold'], extracted['thunder_time_threshold'],
         extracted['thunder_prob_max'], extracted['thunder_time_max']
     ))
     print('\n--- EMAIL HTML MORGEN ---')
     print(rg.generate_morning_email_html(
         rep,
         extracted['rain_prob_threshold'], extracted['rain_prob_time_threshold'],
-        extracted['rain_amt_threshold'], extracted['rain_prob_max'], extracted['rain_prob_time_max'],
-        extracted['rain_amt_max'], extracted['thunder_prob_threshold'], extracted['thunder_time_threshold'],
+        extracted['rain_amt_threshold'], extracted['rain_amt_time_threshold'],
+        extracted['rain_prob_max'], extracted['rain_prob_time_max'],
+        extracted['rain_amt_max'], extracted['rain_amt_time_threshold'],
+        extracted['thunder_prob_threshold'], extracted['thunder_time_threshold'],
         extracted['thunder_prob_max'], extracted['thunder_time_max']
     ))
     print('\n--- EMAIL PLAINTEXT MORGEN ---')
     print(rg.generate_morning_email_plaintext(
         rep,
         extracted['rain_prob_threshold'], extracted['rain_prob_time_threshold'],
-        extracted['rain_amt_threshold'], extracted['rain_prob_max'], extracted['rain_prob_time_max'],
-        extracted['rain_amt_max'], extracted['thunder_prob_threshold'], extracted['thunder_time_threshold'],
+        extracted['rain_amt_threshold'], extracted['rain_amt_time_threshold'],
+        extracted['rain_prob_max'], extracted['rain_prob_time_max'],
+        extracted['rain_amt_max'], extracted['rain_amt_time_threshold'],
+        extracted['thunder_prob_threshold'], extracted['thunder_time_threshold'],
         extracted['thunder_prob_max'], extracted['thunder_time_max']
     ))
     rep = generate_report(ReportMode.DAY, stage, date, wd, thunderstorm_plus1=70)
@@ -646,23 +866,29 @@ if __name__ == "__main__":
     print(rg.generate_day_inreach(
         rep,
         extracted['rain_prob_threshold'], extracted['rain_prob_time_threshold'],
-        extracted['rain_amt_threshold'], extracted['rain_prob_max'], extracted['rain_prob_time_max'],
-        extracted['rain_amt_max'], extracted['thunder_prob_threshold'], extracted['thunder_time_threshold'],
+        extracted['rain_amt_threshold'], extracted['rain_amt_time_threshold'],
+        extracted['rain_prob_max'], extracted['rain_prob_time_max'],
+        extracted['rain_amt_max'], extracted['rain_amt_time_threshold'],
+        extracted['thunder_prob_threshold'], extracted['thunder_time_threshold'],
         extracted['thunder_prob_max'], extracted['thunder_time_max']
     ))
     print('\n--- EMAIL HTML TAG ---')
     print(rg.generate_day_email_html(
         rep,
         extracted['rain_prob_threshold'], extracted['rain_prob_time_threshold'],
-        extracted['rain_amt_threshold'], extracted['rain_prob_max'], extracted['rain_prob_time_max'],
-        extracted['rain_amt_max'], extracted['thunder_prob_threshold'], extracted['thunder_time_threshold'],
+        extracted['rain_amt_threshold'], extracted['rain_amt_time_threshold'],
+        extracted['rain_prob_max'], extracted['rain_prob_time_max'],
+        extracted['rain_amt_max'], extracted['rain_amt_time_threshold'],
+        extracted['thunder_prob_threshold'], extracted['thunder_time_threshold'],
         extracted['thunder_prob_max'], extracted['thunder_time_max']
     ))
     print('\n--- EMAIL PLAINTEXT TAG ---')
     print(rg.generate_day_email_plaintext(
         rep,
         extracted['rain_prob_threshold'], extracted['rain_prob_time_threshold'],
-        extracted['rain_amt_threshold'], extracted['rain_prob_max'], extracted['rain_prob_time_max'],
-        extracted['rain_amt_max'], extracted['thunder_prob_threshold'], extracted['thunder_time_threshold'],
+        extracted['rain_amt_threshold'], extracted['rain_amt_time_threshold'],
+        extracted['rain_prob_max'], extracted['rain_prob_time_max'],
+        extracted['rain_amt_max'], extracted['rain_amt_time_threshold'],
+        extracted['thunder_prob_threshold'], extracted['thunder_time_threshold'],
         extracted['thunder_prob_max'], extracted['thunder_time_max']
     )) 
